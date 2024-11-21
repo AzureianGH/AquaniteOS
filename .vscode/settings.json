@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "string": "cpp",
+        "doomkeys.h": "c",
+        "compare": "cpp",
+        "cstdint": "cpp"
+    }
+}
