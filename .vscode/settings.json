@@ -5,6 +5,15 @@
         "compare": "cpp",
         "cstdint": "cpp",
         "ratio": "cpp",
-        "flanterm.h": "c"
+        "flanterm.h": "c",
+        "*.def": "cpp",
+        "*.tcc": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "string_view": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp"
     }
 }

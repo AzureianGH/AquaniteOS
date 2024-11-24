@@ -84,8 +84,8 @@ extern uint64_t kernel_end;
 limine_framebuffer* framebuffer;
 
 /// ---------- GLOBAL FUNCS ---------- ///
-void test_ps2_keyboard(key_t key);
 void main_process();
+void handle_shell_input(key_t key);
 extern void kernel_main() {
     
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {hcf();}
@@ -114,12 +114,14 @@ extern void kernel_main() {
     process_init();
     sched_init();
     process_create(main_process);
-    
+    KeyboardInit();
+    AddKeyboardInterrupt(handle_shell_input);
     InitializeISR();
     InitializeIDT();
     PITInit();
     lprintf(logging_level::OK, "Kernel initialized.\n");
     lprintf(logging_level::INFO, "Waiting for scheduler handoff...\n");
+    
     EnableInterrupts();
     while (true); // This point will be reached until the scheduler takes control. Then this will never be reached again.
     halt(); // This should never be reached. If it is, halt the system. (We say "if" since code is never perfect)
@@ -127,6 +129,9 @@ extern void kernel_main() {
 
 uint8_t input_buffer[1024];
 uint16_t input_buffer_index = 0;
+bool ready_for_input = false;
+bool looped = false;
+bool shift_pressed = false; // Track if Shift key is pressed
 
 void clear_input_buffer() {
     memset(input_buffer, 0, sizeof(input_buffer));
@@ -140,8 +145,12 @@ void handle_command() {
     // Check the command and respond
     if (strcmp((char *)input_buffer, "hello") == 0) {
         printf("Hello, world!\n");
+        ready_for_input = true;
+        looped = false;
     } else {
         printf("Unknown command: %s\n", input_buffer);
+        ready_for_input = true;
+        looped = false;
     }
 
     // Clear the buffer after handling the command
@@ -150,7 +159,17 @@ void handle_command() {
 
 void handle_shell_input(key_t key) {
     if (key.released) {
+        // Reset shift state when released
+        if (key.scancode == 0x2A || key.scancode == 0x36) {
+            shift_pressed = false;
+        }
         return; // Ignore key releases
+    }
+
+    // Handle Shift key press
+    if (key.scancode == 0x2A || key.scancode == 0x36) {
+        shift_pressed = true;
+        return; // Don't process Shift key as input
     }
 
     // Handle Backspace
@@ -163,11 +182,13 @@ void handle_shell_input(key_t key) {
     }
     // Handle Enter
     else if (key.scancode == 0x1C) {
+        ready_for_input = false; // Stop accepting input until the command is processed
         printf("\n"); // Move to the next line
         handle_command(); // Process the command
     }
     // Handle other keys
     else {
+        // Define standard ASCII characters for scancodes
         static const char scancode_to_ascii[128] = {
             0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b', 
             '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
@@ -178,29 +199,53 @@ void handle_shell_input(key_t key) {
             0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
         };
 
-        // Convert scancode to ASCII and add to buffer
+        // Define shifted ASCII characters (e.g., Shift+1 -> '!', Shift+2 -> '@', etc.)
+        static const char shifted_scancode_to_ascii[128] = {
+            0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', 
+            '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
+            0,   'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~',
+            0,   '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0,
+            '*', 0,   ' ', 0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+            0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+            0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+        };
+
+        // Use the shifted mapping if Shift is pressed, otherwise use the normal one
+        char ascii_char = 0;
         if (key.scancode < 128) {
-            char ascii_char = scancode_to_ascii[key.scancode];
-            if (ascii_char != 0 && input_buffer_index < sizeof(input_buffer) - 1) {
-                input_buffer[input_buffer_index++] = ascii_char;
-                printf("%c", ascii_char); // Echo the character to the terminal
+            if (shift_pressed) {
+                ascii_char = shifted_scancode_to_ascii[key.scancode];
+            } else {
+                ascii_char = scancode_to_ascii[key.scancode];
             }
+        }
+
+        // If a valid character is found, add it to the input buffer
+        if (ascii_char != 0 && input_buffer_index < sizeof(input_buffer) - 1) {
+            input_buffer[input_buffer_index++] = ascii_char;
+            printf("%c", ascii_char); // Echo the character to the terminal
         }
     }
 }
 
 void main_process() {
     lprintf(logging_level::OK, "Scheduler control given; main process started.\n");
-     // Add the shell input handler to the keyboard interrupt system
-    
-    init_ps2_keyboard();
-    ps2_keyboard_add_handler(handle_shell_input);
-
+    ready_for_input = true;
     printf("Welcome to the Aquanite shell!\n");
-    printf("aqua |> ");
+
     while (true) {
         // Main loop does nothing; input is interrupt-driven
+        if (ready_for_input && !looped) {
+            printf("aqua > ");
+            looped = true;
+        }
+
+        // Reset the looped flag when command is processed and ready for input again
+        if (!ready_for_input) {
+            looped = false;
+        }
     }
 }
+
 
 /// --------------------------------- ///
