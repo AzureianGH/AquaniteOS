@@ -12,6 +12,7 @@ void abort(void) {
     asm volatile("cli; hlt");
 }
 uint64_t rnd = 4;
+int errnoa = 0;
 #define stderr 0
 //fprintf
 void fprintf(int fd, const char *fmt, ...) 
@@ -55,7 +56,6 @@ int munmap(void *addr, size_t length) {
 
 #define MAP_PRIVATE 2
 
-int errno = 0;
 #define ENOMEM 1
 #define USE_LOCKS 1
 #define EINVAL 2
@@ -544,7 +544,7 @@ ABORT_ON_ASSERT_FAILURE   default: defined as 1 (true)
   ABORT_ON_ASSERT_FAILURE cause assertions failures to call abort(),
   which will usually make debugging easier.
 
-MALLOC_FAILURE_ACTION     default: sets errno to ENOMEM, or no-op on win32
+MALLOC_FAILURE_ACTION     default: sets errnoa to ENOMEM, or no-op on win32
   The action to take before "return 0" when malloc fails to be able to
   return memory because there is none available.
 
@@ -640,7 +640,7 @@ REALLOC_ZERO_BYTES_FREES    default: not defined
   realloc(p, 0).
 
 LACKS_UNISTD_H, LACKS_FCNTL_H, LACKS_SYS_PARAM_H, LACKS_SYS_MMAN_H
-LACKS_STRINGS_H, LACKS_STRING_H, LACKS_SYS_TYPES_H,  LACKS_ERRNO_H
+LACKS_STRINGS_H, LACKS_STRING_H, LACKS_SYS_TYPES_H,  LACKS_errnoa_H
 LACKS_STDLIB_H LACKS_SCHED_H LACKS_TIME_H  default: NOT defined unless on WIN32
   Define these if your system does not have these header files.
   You might need to manually insert some of the declarations they provide.
@@ -853,7 +853,7 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 #endif  /* linux */
 #endif  /* HAVE_MREMAP */
 #ifndef MALLOC_FAILURE_ACTION
-#define MALLOC_FAILURE_ACTION  errno = ENOMEM;
+#define MALLOC_FAILURE_ACTION  errnoa = ENOMEM;
 #endif  /* MALLOC_FAILURE_ACTION */
 #ifndef HAVE_MORECORE
 #if ONLY_MSPACES
@@ -1042,7 +1042,7 @@ extern "C" {
 /*
   malloc(size_t n)
   Returns a pointer to a newly allocated chunk of at least n bytes, or
-  null if no space is available, in which case errno is set to ENOMEM
+  null if no space is available, in which case errnoa is set to ENOMEM
   on ANSI C systems.
 
   If n is zero, malloc returns a minimum-sized chunk. (The minimum
@@ -1083,7 +1083,7 @@ DLMALLOC_EXPORT void* dlcalloc(size_t, size_t);
 
   If p is null, realloc is equivalent to malloc.
 
-  If space is not available, realloc returns null, errno is set (if on
+  If space is not available, realloc returns null, errnoa is set (if on
   ANSI) and p is NOT freed.
 
   if n is for fewer bytes than already held by p, the newly unused
@@ -6373,7 +6373,7 @@ History:
       * Introduce USE_PUBLIC_MALLOC_WRAPPERS, USE_MALLOC_LOCK
       * Introduce MALLOC_FAILURE_ACTION, MORECORE_CONTIGUOUS
         Thanks to Tony E. Bennett <tbennett@nvidia.com> and others.
-      * Include errno.h to support default failure action.
+      * Include errnoa.h to support default failure action.
 
     V2.6.6 Sun Dec  5 07:42:19 1999  Doug Lea  (dl at gee)
       * return null for negative arguments

@@ -15,7 +15,10 @@
 #include <sched/proc.h>
 #include <memory/gccmemory.h>
 #include <string/string.h>
-#include <paging/paging.h>
+#include <memory/paging/heap.h>
+#include <memory/paging/vmm.h>
+#include <memory/paging/physical.h>
+#include <memory/paging/common_memory.h>
 /// ------------------------------ ///
 
 /// ---------- DEFINES ---------- ///
@@ -119,17 +122,10 @@ extern void kernel_main() {
     AddKeyboardInterrupt(handle_shell_input);
     InitializeISR();
     InitializeIDT();
-    paging_init();
-    uint64_t virttestaddress = 0x1000;
-    uint64_t phystestaddress = 0x2000;
-    paging_map(virttestaddress, phystestaddress, PTE_PRESENT | PTE_RW | PTE_USER);
-    uint64_t mapped_phys = paging_get_phys(virttestaddress);
-    if (mapped_phys != phystestaddress) {
-        lprintf(logging_level::ERROR, "Paging test failed: %l != %l\n", mapped_phys, phystestaddress);
-    }
-    else {
-        lprintf(logging_level::OK, "Paging test passed.\n");
-    }
+    initialize_phys_memory();
+    initialize_virtual_memory();
+    initialize_heap();
+
     PITInit();
     lprintf(logging_level::OK, "Kernel initialized.\n");
     lprintf(logging_level::INFO, "Waiting for scheduler handoff...\n");
