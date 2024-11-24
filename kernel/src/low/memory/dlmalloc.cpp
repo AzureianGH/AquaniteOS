@@ -4,6 +4,7 @@
 #include <memory/heap.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <idt/idt.h>
 // abort function
 void abort(void) {
     //disable interrupts
@@ -4728,6 +4729,7 @@ static void* tmalloc_small(mstate m, size_t nb) {
 #if !ONLY_MSPACES
 
 void* dlmalloc(size_t bytes) {
+  DisableInterrupts();
   /*
      Basic algorithm:
      If a small request (< 256 bytes minus per-chunk overhead):
@@ -4857,15 +4859,17 @@ void* dlmalloc(size_t bytes) {
 
   postaction:
     POSTACTION(gm);
+    EnableInterrupts();
     return mem;
   }
-
+  EnableInterrupts();
   return 0;
 }
 
 /* ---------------------------- free --------------------------- */
 
 void dlfree(void* mem) {
+  DisableInterrupts();
   /*
      Consolidate freed chunks with preceeding or succeeding bordering
      free chunks, if they exist, and then place in a bin.  Intermixed
@@ -4972,9 +4976,11 @@ void dlfree(void* mem) {
 #if !FOOTERS
 #undef fm
 #endif /* FOOTERS */
+EnableInterrupts();
 }
 
 void* dlcalloc(size_t n_elements, size_t elem_size) {
+  DisableInterrupts();
   void* mem;
   size_t req = 0;
   if (n_elements != 0) {
@@ -4986,6 +4992,8 @@ void* dlcalloc(size_t n_elements, size_t elem_size) {
   mem = dlmalloc(req);
   if (mem != 0 && calloc_must_clear(mem2chunk(mem)))
     memset(mem, 0, req);
+  
+  EnableInterrupts();
   return mem;
 }
 

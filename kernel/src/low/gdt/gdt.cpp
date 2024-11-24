@@ -1,66 +1,143 @@
+/*
+	This file is part of an x86_64 hobbyist operating system called KnutOS
+	Everything is openly developed on GitHub: https://github.com/Tix3Dev/KnutOS/
+
+	Copyright (C) 2021-2022  Yves Vollmeier <https://github.com/Tix3Dev>
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+// special thanks to this site (as parts of the code are from there):
+// https://blog.llandsmeer.com/tech/2019/07/21/uefi-x64-userland.html
+
+#include <stdint.h>
+
 #include <gdt/gdt.h>
 
-extern "C" void GDT_flush(uint64_t);
 
-// gdt and tss
-struct GDT_entry GDT[5];
-struct GDT_ptr GDT_ptr;
-struct TSS tss;
+extern "C" void _load_gdt_and_tss_asm(struct GDT_Pointer *ptr);
 
-void GDT_set_gate(int num, uint64_t base, uint64_t limit, uint8_t access, uint8_t gran)
+static struct TSS	    tss;
+static struct GDT	    gdt;
+static struct GDT_Pointer   gdt_pointer;
+
+// set the arguments for a given segment
+void create_descriptors(void)
 {
-    GDT[num].base_low = (base & 0xFFFF);
-    GDT[num].base_middle = (base >> 16) & 0xFF;
-    GDT[num].base_high = (base >> 24) & 0xFF;
+    // 0x00: null
+    gdt.null.limit_15_0				    = 0;
+    gdt.null.base_15_0				    = 0;
+    gdt.null.base_23_16				    = 0;
+    gdt.null.type				    = 0x00;
+    gdt.null.limit_19_16_and_flags		    = 0x00;
+    gdt.null.base_31_24				    = 0;
 
-    GDT[num].limit_low = (limit & 0xFFFF);
-    GDT[num].granularity = (limit >> 16) & 0x0F;
+    // 0x08: kernel code (kernel base selector)
+    gdt.kernel_code.limit_15_0			    = 0;
+    gdt.kernel_code.base_15_0			    = 0;
+    gdt.kernel_code.base_23_16			    = 0;
+    gdt.kernel_code.type			    = 0x9A;
+    gdt.kernel_code.limit_19_16_and_flags	    = 0xA0;
+    gdt.kernel_code.base_31_24			    = 0;
 
-    GDT[num].granularity |= gran & 0xF0;
-    GDT[num].access = access;
+    // 0x10: kernel data
+    gdt.kernel_data.limit_15_0			    = 0;
+    gdt.kernel_data.base_15_0			    = 0;
+    gdt.kernel_data.base_23_16			    = 0;
+    gdt.kernel_data.type			    = 0x92;
+    gdt.kernel_data.limit_19_16_and_flags	    = 0xA0;
+    gdt.kernel_data.base_31_24			    = 0;
+
+    // 0x18: null (user base selector)
+    gdt.null2.limit_15_0			    = 0;
+    gdt.null2.base_15_0	    			    = 0;
+    gdt.null2.base_23_16    			    = 0;
+    gdt.null2.type				    = 0x00;
+    gdt.null2.limit_19_16_and_flags		    = 0x00;
+    gdt.null2.base_31_24			    = 0;
+
+    // 0x20: user data
+    gdt.user_data.limit_15_0			    = 0;
+    gdt.user_data.base_15_0			    = 0;
+    gdt.user_data.base_23_16			    = 0;
+    gdt.user_data.type				    = 0x92;
+    gdt.user_data.limit_19_16_and_flags		    = 0xA0;
+    gdt.user_data.base_31_24			    = 0;
+
+    // 0x28: user code
+    gdt.user_code.limit_15_0			    = 0;
+    gdt.user_code.base_15_0			    = 0;
+    gdt.user_code.base_23_16			    = 0;
+    gdt.user_code.type				    = 0x9A;
+    gdt.user_code.limit_19_16_and_flags		    = 0xA0;
+    gdt.user_code.base_31_24			    = 0;
+
+    // 0x30: ovmf data
+    gdt.ovmf_data.limit_15_0			    = 0;
+    gdt.ovmf_data.base_15_0			    = 0;
+    gdt.ovmf_data.base_23_16			    = 0;
+    gdt.ovmf_data.type				    = 0x92;
+    gdt.ovmf_data.limit_19_16_and_flags		    = 0xA0;
+    gdt.ovmf_data.base_31_24			    = 0;
+
+    // 0x38: ovmf code
+    gdt.ovmf_code.limit_15_0			    = 0;
+    gdt.ovmf_code.base_15_0			    = 0;
+    gdt.ovmf_code.base_23_16			    = 0;
+    gdt.ovmf_code.type				    = 0x9A;
+    gdt.ovmf_code.limit_19_16_and_flags		    = 0xA0;
+    gdt.ovmf_code.base_31_24			    = 0;
+
+    // 0x40: tss low
+    gdt.tss_low.limit_15_0			    = 0;
+    gdt.tss_low.base_15_0			    = 0;
+    gdt.tss_low.base_23_16			    = 0;
+    gdt.tss_low.type				    = 0x89;
+    gdt.tss_low.limit_19_16_and_flags		    = 0xA0;
+    gdt.tss_low.base_31_24			    = 0;
+
+    // 0x48: tss high
+    gdt.tss_high.limit_15_0			    = 0;
+    gdt.tss_high.base_15_0			    = 0;
+    gdt.tss_high.base_23_16			    = 0;
+    gdt.tss_high.type				    = 0x00;
+    gdt.tss_high.limit_19_16_and_flags		    = 0x00;
+    gdt.tss_high.base_31_24			    = 0;
 }
 
-void GDT_init()
+// create descriptors and load GDT and TSS
+void gdt_init(void)
 {
-    GDT_ptr.limit = (sizeof(struct GDT_entry) * 5) - 1;
-    GDT_ptr.base = (uint64_t)&GDT;
+    create_descriptors();
 
-    GDT_set_gate(0, 0, 0, 0, 0);                // Null segment
-    GDT_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code segment
-    GDT_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Data segment
-    GDT_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
-    GDT_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
+    // memzero the TSS
+    for (uint64_t i = 0; i < sizeof(tss); i++)
+        ((uint8_t *)(void *)&tss)[i] = 0;
 
-    GDT_flush((uint64_t)&GDT_ptr);
+    uint64_t tss_base = ((uint64_t)&tss);
+
+    gdt.tss_low.base_15_0   = tss_base		& 0xffff;
+    gdt.tss_low.base_23_16  = (tss_base >> 16)	& 0xff;
+    gdt.tss_low.base_31_24  = (tss_base >> 24)	& 0xff;
+    gdt.tss_low.limit_15_0  = sizeof(tss);
+    gdt.tss_high.limit_15_0 = (tss_base >> 32)	& 0xffff;
+    gdt.tss_high.base_15_0  = (tss_base >> 48)	& 0xffff;
+
+    gdt_pointer.limit	= sizeof(gdt) - 1;
+    gdt_pointer.base	= (uint64_t)&gdt;
+
+    _load_gdt_and_tss_asm(&gdt_pointer);
+
+
+    lprintf(logging_level::OK, "GDT initialized\n");
 }
 
-void GDT_init_TSS(uint64_t rsp0)
-{
-    tss.reserved = 0;
-    tss.rsp[0] = rsp0;
-    tss.rsp[1] = 0;
-    tss.rsp[2] = 0;
-    tss.reserved2 = 0;
-    tss.ist[0] = 0;
-    tss.ist[1] = 0;
-    tss.ist[2] = 0;
-    tss.ist[3] = 0;
-    tss.ist[4] = 0;
-    tss.ist[5] = 0;
-    tss.ist[6] = 0;
-    tss.reserved3 = 0;
-    tss.reserved4 = 0;
-    tss.iomap_base = sizeof(struct TSS);
-
-    GDT_set_gate(5, (uint64_t)&tss, sizeof(struct TSS), 0xE9, 0x00);
-
-    __asm__ __volatile__("movw $0x2B, %ax\n"
-                         "ltr %ax");
-}
-
-void GDT_init_TSS_init()
-{
-    //init gdt and tss
-    GDT_init();
-    GDT_init_TSS(0x1000);
-}
+// cs = 0x08, ss = 0x10

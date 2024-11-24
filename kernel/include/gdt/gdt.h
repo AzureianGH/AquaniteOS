@@ -1,36 +1,76 @@
+/*
+	This file is part of an x86_64 hobbyist operating system called KnutOS
+	Everything is openly developed on GitHub: https://github.com/Tix3Dev/KnutOS/
+	
+	Copyright (C) 2021-2022  Yves Vollmeier <https://github.com/Tix3Dev>
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #pragma once
-// X64 GDT
 #include <stdint.h>
 #include <stddef.h>
+#include <flanterm/flantermglobal.h>
 
-struct GDT_entry {
-    uint16_t limit_low;
-    uint16_t base_low;
-    uint8_t base_middle;
-    uint8_t access;
-    uint8_t granularity;
-    uint8_t base_high;
-} __attribute__((packed));
+// describes the attributes of a given segment
+struct GDT_Descriptor
+{
+    uint16_t limit_15_0;
+    uint16_t base_15_0;
+    uint8_t	 base_23_16;
+    uint8_t	 type;
+    uint8_t	 limit_19_16_and_flags;
+    uint8_t	 base_31_24;
+} __attribute__((packed)); // for no special compiler optimization
 
-struct GDT_ptr {
+// task state segment (for graphical layout see Intel SDM Figure 7-11)
+struct TSS
+{
+    uint32_t	reserved0;
+    uint64_t	rsp0;
+    uint64_t	rsp1;
+    uint64_t	rsp2;
+    uint64_t	reserved1;
+    uint64_t	ist1;
+    uint64_t	ist2;
+    uint64_t	ist3;
+    uint64_t	ist4;
+    uint64_t	ist5;
+    uint64_t	ist6;
+    uint64_t	ist7;
+    uint64_t	reserved2;
+    uint16_t	reserved3;
+    uint16_t	iopb_offset;
+} __attribute__((packed)); // for no special compiler optimization
+
+// combines everything
+
+struct __attribute__((aligned(4096))) GDT
+{
+    struct GDT_Descriptor   null;
+    struct GDT_Descriptor   kernel_code;
+    struct GDT_Descriptor   kernel_data;
+    struct GDT_Descriptor   null2;
+    struct GDT_Descriptor   user_data;
+    struct GDT_Descriptor   user_code;
+    struct GDT_Descriptor   ovmf_data;
+    struct GDT_Descriptor   ovmf_code;
+    struct GDT_Descriptor   tss_low;
+    struct GDT_Descriptor   tss_high;
+} __attribute__((packed)); // for no special compiler optimization
+
+// used to load the GDT into the gdtr register
+struct GDT_Pointer
+{
     uint16_t limit;
     uint64_t base;
-} __attribute__((packed));
+} __attribute__((packed)); // for no special compiler optimization
 
-struct TSS {
-    uint32_t reserved;
-    uint64_t rsp[3];
-    uint64_t reserved2;
-    uint64_t ist[7];
-    uint64_t reserved3;
-    uint16_t reserved4;
-    uint16_t iomap_base;
-} __attribute__((packed));
-
-
-
-void GDT_set_gate(int num, uint64_t base, uint64_t limit, uint8_t access, uint8_t gran);
-void GDT_init();
-void GDT_init_TSS(uint64_t rsp0);
-
-void GDT_init_TSS_init();
+void gdt_init(void);

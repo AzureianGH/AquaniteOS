@@ -78,13 +78,12 @@ override SHARED_FLAGS := \
     -finline-functions \
     -funroll-loops \
     -fomit-frame-pointer \
-    -mfpmath=sse+387 \
+    -mfpmath=sse \
     -Wno-error=type-limits \
     -Wno-error=missing-field-initializers \
     -Wno-missing-field-initializers \
     -msse4.2 \
     -I./include \
-    -I./include/libhydrix \
 
 # Internal C++ flags that should not be changed by the user.
 override CXXFLAGS += \

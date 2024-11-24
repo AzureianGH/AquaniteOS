@@ -3,6 +3,8 @@
         "string": "cpp",
         "doomkeys.h": "c",
         "compare": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "ratio": "cpp",
+        "flanterm.h": "c"
     }
 }
