@@ -547,6 +547,17 @@ instruction_t instruction_conversion[256] = {
     { 0xFF, "INC", "Increment register", "REG" }
 };
 
+registers_t last_registers;
+bool captured_last_registers = false;
+bool IDT_registers_to_capture()
+{
+    return captured_last_registers;
+}
+registers_t* IDT_get_last_registers()
+{
+    captured_last_registers = false;
+    return &last_registers;
+}
 extern "C" void ISRHandler(registers_t *r) {
     if (r->isrNumber < 32) {
         uint64_t cr2;
@@ -568,6 +579,30 @@ extern "C" void ISRHandler(registers_t *r) {
 
         // Log the instruction mnemonic
         lprintf(logging_level::ERROR, "Instruction: %s\n", inst->mnemonic);
+
+        //dump regs
+        lprintf(logging_level::ERROR, "RAX: %l\n", r->rax);
+        lprintf(logging_level::ERROR, "RBX: %l\n", r->rbx);
+        lprintf(logging_level::ERROR, "RCX: %l\n", r->rcx);
+        lprintf(logging_level::ERROR, "RDX: %l\n", r->rdx);
+        lprintf(logging_level::ERROR, "RSI: %l\n", r->rsi);
+        lprintf(logging_level::ERROR, "RDI: %l\n", r->rdi);
+        lprintf(logging_level::ERROR, "RBP: %l\n", r->rbp);
+        lprintf(logging_level::ERROR, "RSP: %l\n", r->rsp);
+        lprintf(logging_level::ERROR, "R8: %l\n", r->r8);
+        lprintf(logging_level::ERROR, "R9: %l\n", r->r9);
+        lprintf(logging_level::ERROR, "R10: %l\n", r->r10);
+        lprintf(logging_level::ERROR, "R11: %l\n", r->r11);
+        lprintf(logging_level::ERROR, "R12: %l\n", r->r12);
+        lprintf(logging_level::ERROR, "R13: %l\n", r->r13);
+        lprintf(logging_level::ERROR, "R14: %l\n", r->r14);
+        lprintf(logging_level::ERROR, "R15: %l\n", r->r15);
+        lprintf(logging_level::ERROR, "RFLAGS: %l\n", r->rflags);
+        lprintf(logging_level::ERROR, "CR2: %l\n", cr2);
+        //ss cs
+        lprintf(logging_level::ERROR, "SS: %l\n", r->ss);
+        lprintf(logging_level::ERROR, "CS: %l\n", r->cs);
+
         for (;;) {
             asm volatile("cli");
             asm volatile("hlt");
@@ -577,7 +612,8 @@ extern "C" void ISRHandler(registers_t *r) {
     // After every interrupt, send an EOI to the PICs or they will not send another interrupt again
     outb(0xA0, 0x20);
     outb(0x20, 0x20);
-
+    last_registers = *r;
+    captured_last_registers = true;
     // Call the event handler if defined
     if (eventHandlers[r->isrNumber] != NULL) {
         eventHandlers[r->isrNumber](r);

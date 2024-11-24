@@ -15,6 +15,7 @@
 #include <sched/proc.h>
 #include <memory/gccmemory.h>
 #include <string/string.h>
+#include <paging/paging.h>
 /// ------------------------------ ///
 
 /// ---------- DEFINES ---------- ///
@@ -118,6 +119,17 @@ extern void kernel_main() {
     AddKeyboardInterrupt(handle_shell_input);
     InitializeISR();
     InitializeIDT();
+    paging_init();
+    uint64_t virttestaddress = 0x1000;
+    uint64_t phystestaddress = 0x2000;
+    paging_map(virttestaddress, phystestaddress, PTE_PRESENT | PTE_RW | PTE_USER);
+    uint64_t mapped_phys = paging_get_phys(virttestaddress);
+    if (mapped_phys != phystestaddress) {
+        lprintf(logging_level::ERROR, "Paging test failed: %l != %l\n", mapped_phys, phystestaddress);
+    }
+    else {
+        lprintf(logging_level::OK, "Paging test passed.\n");
+    }
     PITInit();
     lprintf(logging_level::OK, "Kernel initialized.\n");
     lprintf(logging_level::INFO, "Waiting for scheduler handoff...\n");
@@ -137,31 +149,104 @@ void clear_input_buffer() {
     memset(input_buffer, 0, sizeof(input_buffer));
     input_buffer_index = 0;
 }
+#define MAX_ARGS 10 // Max number of arguments
 
+char *args[MAX_ARGS];
+registers_t *r_l_int;
 void handle_command() {
     // Null-terminate the input buffer for safe string operations
     input_buffer[input_buffer_index] = '\0';
 
-    // Check the command and respond
-    if (strcmp((char *)input_buffer, "hello") == 0) {
-        printf("Hello, world!\n");
-        ready_for_input = true;
-        looped = false;
-    } else {
-        printf("Unknown command: %s\n", input_buffer);
-        ready_for_input = true;
-        looped = false;
+    // Tokenize the input buffer into arguments (split by spaces)
+    int argc = 0;
+    char *token = strtok((char *)input_buffer, " ");  // Split by spaces
+    while (token != NULL && argc < MAX_ARGS) {
+        args[argc++] = token;
+        token = strtok(NULL, " "); // Get the next token
     }
 
-    // Clear the buffer after handling the command
+    // Check the command and respond
+    if (argc > 0) {
+        if (strcmp(args[0], "echo") == 0) {
+            for (int i = 1; i < argc; i++) {
+                printf("%s ", args[i]);
+            }
+            printf("\n");
+        } 
+        else if (strcmp(args[0], "clear") == 0) {
+            printf("\033[2J\033[H"); // Clear the terminal
+        } 
+        else if (strcmp(args[0], "help") == 0) {
+            printf("Available commands:\n");
+            printf("echo [text] - Print text to the terminal\n");
+            printf("clear - Clear the terminal\n");
+            printf("help - Display this help message\n");
+        }
+        else if (strcmp(args[0], "capture") == 0) {
+        if (argc > 1) {
+            if (strcmp(args[1], "next") == 0) {
+                if (argc > 2) {
+                    if (strcmp(args[2], "int") == 0) {
+                        if (IDT_registers_to_capture()) {
+                            r_l_int = IDT_get_last_registers();
+                            printf("Last interrupt: 0x%x\n", r_l_int->isrNumber);
+                        } else {
+                            printf("No interrupts captured yet.\n");
+                        }
+                    }
+                }
+            } 
+            else if (strcmp(args[1], "print") == 0) {
+                if (argc > 2) {
+                    if (strcmp(args[2], "int") == 0) {
+                        if (r_l_int != nullptr) {
+                            //full dump
+                            asm volatile("int $0x0");
+                            printf("\033[0mInterrupt number: 0x%l\n", r_l_int->isrNumber);
+                            printf("\033[0mRIP: 0x%i    RSP:  0x%i\n", r_l_int->rip, r_l_int->rsp);
+                            printf("\033[0mRAX: 0x%i    RBX:  0x%i\n", r_l_int->rax, r_l_int->rbx);
+                            printf("\033[0mRCX: 0x%i    RDX:  0x%i\n", r_l_int->rcx, r_l_int->rdx);
+                            printf("\033[0mRSI: 0x%i    RDI:  0x%i\n", r_l_int->rsi, r_l_int->rdi);
+                            printf("\033[0mRBP: 0x%i    R8:   0x%i\n", r_l_int->rbp, r_l_int->r8);
+                            printf("\033[0mR9 : 0x%i    R10:  0x%i\n", r_l_int->r9, r_l_int->r10);
+                            printf("\033[0mR11: 0x%i    R12:  0x%i\n", r_l_int->r11, r_l_int->r12);
+                            printf("\033[0mR13: 0x%i    R14:  0x%i\n", r_l_int->r13, r_l_int->r14);
+                            printf("\033[0mR15: 0x%i    RFLG: 0x%i\n", r_l_int->r15, r_l_int->rflags);
+                            printf("\033[0mCS:  0x%i    SS:   0x%i\n", r_l_int->cs, r_l_int->ss);
+                        } else {
+                            printf("No interrupts captured yet.\n");
+                        }
+                    }
+                }
+            } 
+            else {
+                printf("Unknown subcommand: %s\n", args[1]);
+            }
+        } 
+        else {
+            printf("Usage: capture [next|start|stop|print]\n");
+        }
+    }
+
+        else {
+            printf("Unknown command: %s\n", args[0]);
+        }
+    } else {
+        printf("No command entered.\n");
+    }
+
+    // Clear the buffer and reset the arguments
+    ready_for_input = true;
+    looped = false;
     clear_input_buffer();
 }
 
 void handle_shell_input(key_t key) {
     if (key.released) {
         // Reset shift state when released
-        if (key.scancode == 0x2A || key.scancode == 0x36) {
+        if (key.scancode == 0xAA || key.scancode == 0x36) {
             shift_pressed = false;
+            
         }
         return; // Ignore key releases
     }
@@ -228,6 +313,7 @@ void handle_shell_input(key_t key) {
     }
 }
 
+
 void main_process() {
     lprintf(logging_level::OK, "Scheduler control given; main process started.\n");
     ready_for_input = true;
@@ -236,7 +322,7 @@ void main_process() {
     while (true) {
         // Main loop does nothing; input is interrupt-driven
         if (ready_for_input && !looped) {
-            printf("aqua > ");
+            printf("\033[0maqua > ");
             looped = true;
         }
 

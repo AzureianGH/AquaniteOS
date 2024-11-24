@@ -222,6 +222,30 @@ void vsnprintf(char *str, size_t size, const char *format, va_list args)
                 }
                 break;
             }
+            case 'i':
+            {
+                //like l but all the ulongs are padded with 0s
+                unsigned long i = va_arg(args, unsigned long); // Get the unsigned long argument
+                char buf[32]; // Buffer to hold the converted value
+                ultoa(i, buf, 16); // Convert the unsigned long to a string in hexadecimal (base 16)
+
+                // Pad the string with 0s
+                int len = strlen(buf); // Get the length of the string
+                for (int i = 0; i < 16 - len; i++) // Loop until the string is 16 characters long
+                {
+                    *buffer = '0'; // Add a 0 to the buffer
+                    buffer++; // Move to the next position in the buffer
+                }
+
+                const char *s = buf; // Pointer to the start of the string
+                while (*s != '\0' && buffer < end) // Loop until the string ends or buffer is full
+                {
+                    *buffer = *s; // Copy the character to the buffer
+                    buffer++; // Move to the next position in the buffer
+                    s++; // Move to the next character in the string
+                }
+                break;
+            }
             }
         }
         else
