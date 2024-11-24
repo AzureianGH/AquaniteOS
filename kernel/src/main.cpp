@@ -192,8 +192,9 @@ void handle_shell_input(key_t key) {
 void main_process() {
     lprintf(logging_level::OK, "Scheduler control given; main process started.\n");
      // Add the shell input handler to the keyboard interrupt system
-    ps2_keyboard_add_handler(handle_shell_input);
+    
     init_ps2_keyboard();
+    ps2_keyboard_add_handler(handle_shell_input);
 
     printf("Welcome to the Aquanite shell!\n");
     printf("aqua |> ");
