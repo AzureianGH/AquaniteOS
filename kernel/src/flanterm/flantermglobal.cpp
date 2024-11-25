@@ -2,12 +2,16 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <idt/idt.h>
+#include <sched/sched.h>
 
 flanterm_context* instance = nullptr;
-
+spinlock_t printlock;
+spinlock_t vprintlock;
 void flanterm_set_instance(flanterm_context *inst)
 {
     instance = inst;
+    spinlock_init(&printlock);
+    spinlock_init(&vprintlock);
 }
 int strlen(const char *str)
 {
@@ -108,6 +112,7 @@ void uitoa(unsigned int value, char *str, int base)
 //vsnprintf
 void vsnprintf(char *str, size_t size, const char *format, va_list args)
 {
+    spinlock_acquire(&printlock);
     char *buffer = str;
     const char *end = str + size;
     const char *fmt = format;
@@ -256,28 +261,7 @@ void vsnprintf(char *str, size_t size, const char *format, va_list args)
         fmt++;
     }
     *buffer = '\0';
-}
-void printf(const char *fmt, uint32_t fg, uint32_t bg, ...)
-{
-    if (instance == nullptr)
-    {
-        return;
-    }
-
-    va_list args;
-    va_start(args, bg);
-
-    char buffer[1024];
-    vsnprintf(buffer, 1024, fmt, args);
-    size_t old_bg = instance->current_bg;
-    size_t old_fg = instance->current_primary;
-    instance->set_text_bg_rgb(instance, bg);
-    instance->set_text_fg_rgb(instance, fg);
-    flanterm_write(instance, buffer, strlen(buffer));
-    instance->set_text_bg(instance, old_bg);
-    instance->set_text_fg(instance, old_fg);
-
-    va_end(args);
+    spinlock_release(&printlock);
 }
 void printf(const char *fmt, ...)
 {
@@ -298,6 +282,7 @@ void printf(const char *fmt, ...)
 }
 void lprintf(logging_level lvl, const char *fmt, ...)
 {
+    spinlock_acquire(&vprintlock);
     if (instance == nullptr)
     {
         return;
@@ -326,6 +311,7 @@ void lprintf(logging_level lvl, const char *fmt, ...)
     }
 
     va_end(args);
+    spinlock_release(&vprintlock);
 }
 void vprintf(const char *fmt, va_list args)
 {

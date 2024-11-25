@@ -62,7 +62,12 @@ volatile limine_rsdp_request rsdp_request = {
     .revision = 0,
     .response = nullptr
 };
-
+__attribute__((used, section(".requests")))
+volatile limine_kernel_address_request limine_kernel_address = {
+    .id = LIMINE_KERNEL_ADDRESS_REQUEST, 
+    .revision = 0, 
+    .response = nullptr
+};
 __attribute__((used, section(".requests")))
 volatile limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST,
@@ -82,6 +87,8 @@ extern void (*__init_array_end[])();
 
 /// ---------- GLOBAL VARS ---------- ///
 limine_memmap_response *limine_memmap_us;
+limine_hhdm_response *limine_hhdm_resp;
+limine_kernel_address_response *limine_kernel_addy;
 limine_framebuffer_response *limine_framebuffer_resp;
 extern uint64_t kernel_start;
 extern uint64_t kernel_end;
@@ -90,12 +97,20 @@ limine_framebuffer* framebuffer;
 /// ---------- GLOBAL FUNCS ---------- ///
 void main_process();
 void handle_shell_input(key_t key);
+void adding();
 extern void kernel_main() {
     
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {hcf();}
     for (size_t i = 0; &__init_array[i] != __init_array_end; i++) {__init_array[i]();}
     if (framebuffer_request.response == nullptr || framebuffer_request.response->framebuffer_count < 1) {hcf();}
     else { framebuffer = framebuffer_request.response->framebuffers[0]; }
+    if (memmap_request.response == nullptr) {hcf();}
+    limine_memmap_us = memmap_request.response;
+    if (hhdm_request.response == nullptr) {hcf();}
+    limine_hhdm_resp = hhdm_request.response;
+    if (limine_kernel_address.response == nullptr) {hcf();}
+    limine_kernel_addy = limine_kernel_address.response;
+    
 
     struct flanterm_context *ft_ctx = flanterm_fb_init(
         NULL,
@@ -115,6 +130,7 @@ extern void kernel_main() {
     lprintf(logging_level::OK, "Framebuffer initialized.\n");
     gdt_init();
     set_heap_start(hhdm_request.response->offset);
+    set_up_common_mem(limine_hhdm_resp, limine_memmap_us, limine_kernel_addy);
     process_init();
     sched_init();
     process_create(main_process);
@@ -125,11 +141,9 @@ extern void kernel_main() {
     initialize_phys_memory();
     initialize_virtual_memory();
     initialize_heap();
-
     PITInit();
     lprintf(logging_level::OK, "Kernel initialized.\n");
     lprintf(logging_level::INFO, "Waiting for scheduler handoff...\n");
-    
     EnableInterrupts();
     while (true); // This point will be reached until the scheduler takes control. Then this will never be reached again.
     halt(); // This should never be reached. If it is, halt the system. (We say "if" since code is never perfect)
@@ -149,6 +163,13 @@ void clear_input_buffer() {
 
 char *args[MAX_ARGS];
 registers_t *r_l_int;
+volatile uint64_t adding1 = 0;
+void adding()
+{
+    
+    while(1) {adding1 += 1;};
+}
+Vector<process_t*> StartedProcs;
 void handle_command() {
     // Null-terminate the input buffer for safe string operations
     input_buffer[input_buffer_index] = '\0';
@@ -164,6 +185,13 @@ void handle_command() {
     // Check the command and respond
     if (argc > 0) {
         if (strcmp(args[0], "echo") == 0) {
+            if (argc > 1)
+            {
+                if (strcmp(args[1], "$adding") == 0)
+                {
+                    printf("Adding: %l\n", adding1);
+                }
+            }
             for (int i = 1; i < argc; i++) {
                 printf("%s ", args[i]);
             }
@@ -172,6 +200,21 @@ void handle_command() {
         else if (strcmp(args[0], "clear") == 0) {
             printf("\033[2J\033[H"); // Clear the terminal
         } 
+        else if (strcmp(args[0], "start") == 0)
+        {
+            if (argc > 1)
+            {
+                if (strcmp(args[1], "test") == 0)
+                {
+                    StartedProcs.PushBack(process_create(adding));
+                    printf("Process created.\n");
+                }
+                else
+                {
+                    printf("start: args required.\n");
+                }
+            }
+        }
         else if (strcmp(args[0], "help") == 0) {
             printf("Available commands:\n");
             printf("echo [text] - Print text to the terminal\n");
@@ -238,6 +281,7 @@ void handle_command() {
 }
 
 void handle_shell_input(key_t key) {
+    
     if (key.released) {
         // Reset shift state when released
         if (key.scancode == 0xAA || key.scancode == 0x36) {
@@ -309,11 +353,15 @@ void handle_shell_input(key_t key) {
     }
 }
 
-
+bool mainprocstartfirst = false;
 void main_process() {
-    lprintf(logging_level::OK, "Scheduler control given; main process started.\n");
-    ready_for_input = true;
-    printf("Welcome to the Aquanite shell!\n");
+    if (!mainprocstartfirst)
+    {
+        lprintf(logging_level::OK, "Scheduler control given; main process started.\n");
+        ready_for_input = true;
+        printf("Welcome to the Aquanite shell!\n");
+        mainprocstartfirst = true;
+    }
 
     while (true) {
         // Main loop does nothing; input is interrupt-driven

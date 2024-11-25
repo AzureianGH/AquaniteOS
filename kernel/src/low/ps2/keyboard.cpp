@@ -3,6 +3,7 @@
 #include <shared.h>
 #include <ps2/keyboard.h>
 #include <flanterm/flantermglobal.h>
+#include <idt/idt.h>
 
 bool AllowKeyboard = true;
 
@@ -37,6 +38,7 @@ inline uint8_t getScancode()
 }
 void KeyboardHandler(registers_t *r)
 {
+    DisableInterrupts();
     if (!AllowKeyboard)
     {
         return;
@@ -58,6 +60,7 @@ void KeyboardHandler(registers_t *r)
     {
         InterruptsToCall[i](data);
     }
+    EnableInterrupts();
     return;
 }
 

@@ -25,3 +25,4 @@ typedef struct
 void process_init();
 process_t* process_create(void(*base)(void));
 uint64_t get_process_count();
+void terminate_process(process_t* proc);

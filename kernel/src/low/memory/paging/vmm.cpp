@@ -21,7 +21,9 @@ void initialize_virtual_memory(void)
 {
     base_address = get_higher_half_offset() + get_highest_memory_map_address();
     remaining_bytes = get_kernel_base_address() - base_address;
-    printf("Bytes in the hole: %016lX (B)\n", remaining_bytes);
+    lprintf(logging_level::INFO,"Bytes in the hole: 0x%u (B)\n", remaining_bytes);
+    lprintf(logging_level::INFO,"Base address: 0x%l\n", base_address);
+    lprintf(logging_level::OK,"Virtual memory initialized.\n");
 }
 
 bool virtual_map(uint64_t physical_address, uint64_t virtual_address, bool is_read_write, bool disable_execution,
@@ -36,7 +38,7 @@ bool virtual_map(uint64_t physical_address, uint64_t virtual_address, bool is_re
     // Alignment check for physical and virtual addresses
     if (physical_address % 4096 != 0)
     {
-        printf("Error: Physical address not aligned to 4 KiB.\n");
+        lprintf(logging_level::ERROR,"Error: Physical address not aligned to 4 KiB.\n");
         asm volatile("cli; hlt");
         return false;
     }
@@ -86,7 +88,7 @@ bool virtual_map(uint64_t physical_address, uint64_t virtual_address, bool is_re
         uint64_t p = reinterpret_cast<uint64_t>(allocate_page());
         if (!p)
         {
-            printf("Error: Failed to allocate PD.\n");
+            lprintf(logging_level::ERROR,"Error: Failed to allocate PD.\n");
             return false;
         }
         memset(reinterpret_cast<void *>(p + get_higher_half_offset()), 0, 4096);
@@ -107,7 +109,7 @@ bool virtual_map(uint64_t physical_address, uint64_t virtual_address, bool is_re
         uint64_t p = reinterpret_cast<uint64_t>(allocate_page());
         if (!p)
         {
-            printf("Error: Failed to allocate PT.\n");
+            lprintf(logging_level::ERROR,"Error: Failed to allocate PT.\n");
             return false;
         }
         memset(reinterpret_cast<void *>(p + get_higher_half_offset()), 0, 4096);
@@ -157,10 +159,10 @@ void print_page_info(uint64_t virtual_address)
     auto &pml4_entry = pml4[indexes.pml4];
     if (!pml4_entry.p)
     {
-        printf("PML4 entry not present for address: %016lX\n", virtual_address);
+        lprintf(logging_level::ERROR,"PML4 entry not present for address: %016lX\n", virtual_address);
         return;
     }
-    printf("PML4[%u]: Present=%d RW=%d US=%d PWT=%d PCD=%d NX=%d PDP_PPN=%016lX\n", indexes.pml4, pml4_entry.p,
+    lprintf(logging_level::ERROR,"PML4[%u]: Present=%d RW=%d US=%d PWT=%d PCD=%d NX=%d PDP_PPN=%016lX\n", indexes.pml4, pml4_entry.p,
                  pml4_entry.rw, pml4_entry.us, pml4_entry.pwt, pml4_entry.pcd, pml4_entry.nx, pml4_entry.pdp_ppn);
 
     // Get PDP entry
@@ -168,10 +170,10 @@ void print_page_info(uint64_t virtual_address)
     auto &pdp_entry = pdp[indexes.pdp];
     if (!pdp_entry.p)
     {
-        printf("PDP entry not present for address: %016lX\n", virtual_address);
+        lprintf(logging_level::ERROR,"PDP entry not present for address: %016lX\n", virtual_address);
         return;
     }
-    printf("PDP[%u]: Present=%d RW=%d US=%d PWT=%d PCD=%d NX=%d PD_PPN=%016lX\n", indexes.pdp, pdp_entry.p,
+    lprintf(logging_level::ERROR,"PDP[%u]: Present=%d RW=%d US=%d PWT=%d PCD=%d NX=%d PD_PPN=%016lX\n", indexes.pdp, pdp_entry.p,
                  pdp_entry.rw, pdp_entry.us, pdp_entry.pwt, pdp_entry.pcd, pdp_entry.nx, pdp_entry.pd_ppn);
 
     // Get PD entry
@@ -179,10 +181,10 @@ void print_page_info(uint64_t virtual_address)
     auto &pd_entry = pd[indexes.pd];
     if (!pd_entry.p)
     {
-        printf("PD entry not present for address: %016lX\n", virtual_address);
+        lprintf(logging_level::ERROR,"PD entry not present for address: %016lX\n", virtual_address);
         return;
     }
-    printf("PD[%u]: Present=%d RW=%d US=%d PWT=%d PCD=%d NX=%d PT_PPN=%016lX\n", indexes.pd, pd_entry.p,
+    lprintf(logging_level::ERROR,"PD[%u]: Present=%d RW=%d US=%d PWT=%d PCD=%d NX=%d PT_PPN=%016lX\n", indexes.pd, pd_entry.p,
                  pd_entry.rw, pd_entry.us, pd_entry.pwt, pd_entry.pcd, pd_entry.nx, pd_entry.pt_ppn);
 
     // Get PT entry
@@ -190,17 +192,17 @@ void print_page_info(uint64_t virtual_address)
     auto &pt_entry = pt[indexes.pt];
     if (!pt_entry.p)
     {
-        printf("PT entry not present for address: %016lX\n", virtual_address);
+        lprintf(logging_level::ERROR,"PT entry not present for address: %016lX\n", virtual_address);
         return;
     }
-    printf("PT[%u]: Present=%d RW=%d US=%d PWT=%d PCD=%d PAT=%d NX=%d "
+    lprintf(logging_level::ERROR,"PT[%u]: Present=%d RW=%d US=%d PWT=%d PCD=%d PAT=%d NX=%d "
                  "Phys_PPN=%016lX\n",
                  indexes.pt, pt_entry.p, pt_entry.rw, pt_entry.us, pt_entry.pwt, pt_entry.pcd, pt_entry.pat,
                  pt_entry.nx, pt_entry.phys_ppn);
 
     // Calculate physical address
     uint64_t physical_address = (pt_entry.phys_ppn << 12);
-    printf("Mapped Physical Address: %016lX\n", physical_address);
+    lprintf(logging_level::ERROR,"Mapped Physical Address: %016lX\n", physical_address);
 }
 
 uint64_t allocate_virtual_memory_kernel(uint64_t size)

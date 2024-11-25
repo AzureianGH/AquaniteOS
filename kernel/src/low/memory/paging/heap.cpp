@@ -20,7 +20,7 @@ void expand_heap(size_t page_count)
 
         if (!page_address)
         {
-            printf("Couldn't allocate page\n");
+            lprintf(logging_level::ERROR,"Couldn't allocate page\n");
             asm volatile("cli; hlt");
         }
 
@@ -28,9 +28,10 @@ void expand_heap(size_t page_count)
 
         if (!resp)
         {
-            printf("map failed.\n");
+            lprintf(logging_level::ERROR,"map failed.\n");
             asm volatile("cli;hlt");
         }
+        
 
         heap_end += 4096;
     }
@@ -65,7 +66,7 @@ extern "C" void *sbrk(long size)
 
 extern "C" void *mmap(void *ptr, long size, long prot, long type, long handle, long arg)
 {
-    printf("Called mmap(ptr=%p, size=%ld, prot=%ld, type=%ld, handle=%ld, "
+    lprintf(logging_level::ERROR,"Called mmap(ptr=%p, size=%ld, prot=%ld, type=%ld, handle=%ld, "
                  "arg=%ld)\n",
                  ptr, size, prot, type, handle, arg);
     asm volatile("cli; hlt");
@@ -74,7 +75,7 @@ extern "C" void *mmap(void *ptr, long size, long prot, long type, long handle, l
 
 extern "C" long munmap(void *ptr, long size)
 {
-    printf("Called munmap(ptr=%p, size=%ld)\n", ptr, size);
+    lprintf(logging_level::ERROR,"Called munmap(ptr=%p, size=%ld)\n", ptr, size);
     asm volatile("cli; hlt");
     return 0; // Placeholder for munmap
 }

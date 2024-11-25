@@ -35,9 +35,24 @@ process_t* get_next_process()
     }
     return next_process;
 }
-
+bool is_swap_allowed = true;
+uint32_t sched_lock_num = 0;
+void lock_scheduler()
+{
+    is_swap_allowed = false;
+    sched_lock_num++;
+}
+void unlock_scheduler()
+{
+    sched_lock_num--;
+    if (sched_lock_num == 0)
+    {
+        is_swap_allowed = true;
+    }
+}
 void scheduler(registers_t* r)
 {
+    if(!is_swap_allowed){return;}
     // Get the next process
     process_t* next_process = get_next_process();
     if (!next_process)
@@ -45,6 +60,7 @@ void scheduler(registers_t* r)
         lprintf(logging_level::ERROR, "No process to schedule.\n");
         return;
     }
+    
     //check if the next process is the same as the current process
     if (next_process == next_proc)
     {
@@ -71,6 +87,12 @@ void spinlock_acquire(spinlock_t* lock)
     {
         // Do nothing
     }
+}
+
+bool is_spinlock_owned(spinlock_t* lock)
+{
+    //check if spinlock has owner
+    return lock->lock;
 }
 
 void spinlock_release(spinlock_t* lock)

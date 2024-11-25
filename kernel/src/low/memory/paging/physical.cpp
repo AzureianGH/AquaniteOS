@@ -75,7 +75,7 @@ void initialize_phys_memory(void)
     auto memory_map = get_memory_map();
     if (memory_map == nullptr)
     {
-        printf("No memory map has been found.\n");
+        lprintf(logging_level::ERROR,"No memory map has been found.\n");
         asm volatile("cli; hlt");
     }
 
@@ -121,6 +121,7 @@ void initialize_phys_memory(void)
             push_to_freelist(freelist_entry);
         }
     }
+    lprintf(logging_level::OK,"Physical memory initialized.\n");
 }
 
 
@@ -130,7 +131,7 @@ void *allocate_page(void)
     freelist_entry *entry = pop_from_freelist();
     if (entry == nullptr)
     {
-        printf("No available pages to allocate.\n");
+        lprintf(logging_level::ERROR,"No available pages to allocate.\n");
         spinlock_release(&allocate_spinlock);
         return nullptr;
     }
