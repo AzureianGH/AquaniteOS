@@ -169,7 +169,7 @@ void adding()
     
     while(1) {adding1 += 1;};
 }
-Vector<process_t*> StartedProcs;
+process_t* StartedProc;
 void handle_command() {
     // Null-terminate the input buffer for safe string operations
     input_buffer[input_buffer_index] = '\0';
@@ -200,14 +200,18 @@ void handle_command() {
         else if (strcmp(args[0], "clear") == 0) {
             printf("\033[2J\033[H"); // Clear the terminal
         } 
-        else if (strcmp(args[0], "start") == 0)
+        else if (strcmp(args[0], "proc") == 0)
         {
             if (argc > 1)
             {
                 if (strcmp(args[1], "test") == 0)
                 {
-                    StartedProcs.PushBack(process_create(adding));
+                    StartedProc = process_create(adding);
                     printf("Process created.\n");
+                }
+                else if (strcmp(args[1], "end") == 0)
+                {
+                    terminate_process(StartedProc);
                 }
                 else
                 {

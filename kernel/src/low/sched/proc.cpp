@@ -48,3 +48,11 @@ uint64_t get_process_count()
 {
     return process_count;
 }
+
+void terminate_process(process_t* proc)
+{
+    free(proc->base);
+    process_count--;
+    processes_in_system.EraseValue(proc);
+    free(proc);
+}
