@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-
+#ifdef __cplusplus
 struct virtual_address
 {
     uint64_t canonical : 16;
@@ -106,9 +106,17 @@ inline void invlpg(uint64_t address)
 }
 
 void initialize_virtual_memory(void);
+#endif
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 bool virtual_map(uint64_t physical_address, uint64_t virtual_address, bool is_read_write, bool disable_execution,
                  bool is_supervisor, bool pwt, bool pcd, bool pat, uint8_t pk, bool is_present);
-
+char virtual_unmap(uint64_t virtual_address);
 void print_page_info(uint64_t virtual_address);
 uint64_t allocate_virtual_memory_kernel(uint64_t size);
 void allocate_to(uint64_t virtual_base, uint64_t bytes);
+#ifdef __cplusplus
+}
+#endif

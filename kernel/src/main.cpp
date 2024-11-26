@@ -19,6 +19,7 @@
 #include <memory/paging/vmm.h>
 #include <memory/paging/physical.h>
 #include <memory/paging/common_memory.h>
+#include <ps2/keyboard.h>
 /// ------------------------------ ///
 
 /// ---------- DEFINES ---------- ///
@@ -86,18 +87,18 @@ extern void (*__init_array_end[])();
 /// ---------------------------------- ///
 
 /// ---------- GLOBAL VARS ---------- ///
+limine_framebuffer_response *limine_framebuffer_resp;
+limine_kernel_address_response *limine_kernel_addy;
 limine_memmap_response *limine_memmap_us;
 limine_hhdm_response *limine_hhdm_resp;
-limine_kernel_address_response *limine_kernel_addy;
-limine_framebuffer_response *limine_framebuffer_resp;
+limine_rsdp_response *limine_rsdp_resp;
+limine_framebuffer *framebuffer;
 extern uint64_t kernel_start;
 extern uint64_t kernel_end;
-limine_framebuffer* framebuffer;
 
 /// ---------- GLOBAL FUNCS ---------- ///
 void main_process();
 void handle_shell_input(key_t key);
-void adding();
 extern void kernel_main() {
     
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {hcf();}
@@ -110,6 +111,8 @@ extern void kernel_main() {
     limine_hhdm_resp = hhdm_request.response;
     if (limine_kernel_address.response == nullptr) {hcf();}
     limine_kernel_addy = limine_kernel_address.response;
+    if (rsdp_request.response == nullptr) {hcf();}
+    limine_rsdp_resp = rsdp_request.response;
     
 
     struct flanterm_context *ft_ctx = flanterm_fb_init(
@@ -137,6 +140,8 @@ extern void kernel_main() {
     KeyboardInit();
     AddKeyboardInterrupt(handle_shell_input);
     InitializeISR();
+    //set handle_test_isr as 0x80
+    
     InitializeIDT();
     initialize_phys_memory();
     initialize_virtual_memory();
@@ -200,25 +205,6 @@ void handle_command() {
         else if (strcmp(args[0], "clear") == 0) {
             printf("\033[2J\033[H"); // Clear the terminal
         } 
-        else if (strcmp(args[0], "proc") == 0)
-        {
-            if (argc > 1)
-            {
-                if (strcmp(args[1], "test") == 0)
-                {
-                    StartedProc = process_create(adding);
-                    printf("Process created.\n");
-                }
-                else if (strcmp(args[1], "end") == 0)
-                {
-                    terminate_process(StartedProc);
-                }
-                else
-                {
-                    printf("start: args required.\n");
-                }
-            }
-        }
         else if (strcmp(args[0], "help") == 0) {
             printf("Available commands:\n");
             printf("echo [text] - Print text to the terminal\n");

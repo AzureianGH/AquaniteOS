@@ -144,6 +144,44 @@ bool virtual_map(uint64_t physical_address, uint64_t virtual_address, bool is_re
     return true;
 }
 
+char virtual_unmap(uint64_t virtual_address)
+{
+    auto indexes = split_virtual_address_to_structure(virtual_address);
+
+    auto *pml4 = get_pml4();
+    auto &pml4_entry = pml4[indexes.pml4];
+    if (!pml4_entry.p)
+    {
+        return 0;
+    }
+
+    auto *pdp = reinterpret_cast<struct pdp *>((pml4_entry.pdp_ppn << 12) + get_higher_half_offset());
+    auto &pdp_entry = pdp[indexes.pdp];
+    if (!pdp_entry.p)
+    {
+        return 0;
+    }
+
+    auto *pd = reinterpret_cast<struct pd *>((pdp_entry.pd_ppn << 12) + get_higher_half_offset());
+    auto &pd_entry = pd[indexes.pd];
+    if (!pd_entry.p)
+    {
+        return 0;
+    }
+
+    auto *pt = reinterpret_cast<struct pt *>((pd_entry.pt_ppn << 12) + get_higher_half_offset());
+    auto &pt_entry = pt[indexes.pt];
+    if (!pt_entry.p)
+    {
+        return 0;
+    }
+
+    pt_entry.p = 0;
+    invlpg(virtual_address);
+
+    return 1;
+}
+
 void print_page_info(uint64_t virtual_address)
 {
     if ((virtual_address & 0xffff000000000000) != 0xffff000000000000 && (virtual_address & 0xffff000000000000) != 0)

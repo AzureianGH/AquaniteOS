@@ -14,6 +14,27 @@
         "streambuf": "cpp",
         "string_view": "cpp",
         "functional": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "acpi.h": "c",
+        "uacpi.h": "c",
+        "isr.h": "c",
+        "complex": "c",
+        "exception": "c",
+        "cmath": "c",
+        "random": "c",
+        "iosfwd": "c",
+        "numbers": "c",
+        "stdexcept": "c",
+        "system_error": "c",
+        "typeinfo": "c",
+        "mutex": "c",
+        "algorithm": "c",
+        "idt.h": "c",
+        "kernel_api.h": "c",
+        "stdint.h": "c",
+        "shared.h": "c",
+        "pit.h": "c",
+        "limine.h": "c",
+        "gccmemory.h": "c"
     }
 }

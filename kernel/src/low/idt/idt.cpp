@@ -6,12 +6,12 @@ idt_register_t idt_reg;
 
 // Set the idt gate to a handler, which is the location in memory to a function.
 void SetIDTGate(int n, uint64_t handler) {
-  idt[n].low_offset = (uint16_t)(handler >> 0);
+  idt[n].low_offset = handler & 0xFFFF;
   idt[n].sel = KERNEL_CS;
   idt[n].always0 = 0;
   idt[n].flags = 0x8E;
-  idt[n].mid_offset = (uint16_t)(handler >> 16);
-  idt[n].high_offset = (uint32_t)(handler >> 32);
+  idt[n].mid_offset = (handler >> 16) & 0xFFFF;
+  idt[n].high_offset = (handler >> 32) & 0xFFFFFFFF;
   idt[n].always0again = 0;
 }
 int disablenum = 0;

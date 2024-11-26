@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 #include <io/io.h>
+#ifdef __cplusplus
 #include <idt/regs.h>
+#endif
 
 #define PIT_CHANNEL0 0x40
 #define PIT_CHANNEL1 0x41
@@ -32,7 +34,15 @@
 
 #define PIT_FREQUENCY 1193182 // 1.193182 MHz
 
+#ifdef __cplusplus
 void PITHandler(registers_t *r);
+#endif
 void PITInit();
 void PITSetFrequency(uint16_t frequency);
+#ifdef __cplusplus
+extern "C" {
+#endif
 void PITSleep(uint64_t ms);
+#ifdef __cplusplus
+}
+#endif

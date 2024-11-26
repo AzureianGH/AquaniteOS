@@ -308,11 +308,53 @@ void lprintf(logging_level lvl, const char *fmt, ...)
     case logging_level::ERROR:
         printf("[ \e[1;31mFAIL\033[0m ] %s", buffer);
         break;
+    case logging_level::DEBUG:
+        printf("[ \e[0;34mDEBG\033[0m ] %s", buffer);
+        break;
     }
 
     va_end(args);
     spinlock_release(&vprintlock);
 }
+/// @brief C Friendly variant of clprintf
+/// @note OK = 0, INFO = 1, WARN = 2, ERROR = 3, DEBUG = 4
+void clprintf(unsigned char lvl, const char *fmt, ...)
+{
+    spinlock_acquire(&vprintlock);
+    if (instance == nullptr)
+    {
+        return;
+    }
+
+    va_list args;
+    va_start(args, fmt);
+
+    char buffer[1024];
+    vsnprintf(buffer, 1024, fmt, args);
+
+    switch (lvl)
+    {
+    case 0:
+        printf("[ \e[0;32mOKAY\033[0m ] %s", buffer);
+        break;
+    case 1:
+        printf("[ \e[0;37mINFO\033[0m ] %s", buffer);
+        break;
+    case 2:
+        printf("[ \e[0;33mWARN\033[0m ] %s", buffer);
+        break;
+    case 3:
+        printf("[ \e[1;31mFAIL\033[0m ] %s", buffer);
+        break;
+    case 4:
+        printf("[ \e[0;34mDEBG\033[0m ] %s", buffer);
+        break;
+    }
+
+    va_end(args);
+    spinlock_release(&vprintlock);
+}
+
 void vprintf(const char *fmt, va_list args)
 {
     if (instance == nullptr)

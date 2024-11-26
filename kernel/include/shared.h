@@ -5,6 +5,7 @@
 #define NULL 0
 #endif
 
+#ifdef __cplusplus
 template <typename T> class Vector
 {
 public:
@@ -130,3 +131,4 @@ private:
     size_t capacity;
     T* data;
 };
+#endif

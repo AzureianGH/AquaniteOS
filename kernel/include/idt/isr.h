@@ -1,314 +1,297 @@
 #pragma once
 #include <idt/idt.h>
-#include <pit/pit.h>
-#include <sched/sched.h>
 #include <shared.h>
 #include <stdint.h>
 #include <idt/regs.h>
-#include <ps2/keyboard.h>
-extern "C" void isr0();
-extern "C" void isr1();
-extern "C" void isr2();
-extern "C" void isr3();
-extern "C" void isr4();
-extern "C" void isr5();
-extern "C" void isr6();
-extern "C" void isr7();
-extern "C" void errorIsr8();
-extern "C" void isr9();
-extern "C" void errorIsr10();
-extern "C" void errorIsr11();
-extern "C" void errorIsr12();
-extern "C" void errorIsr13();
-extern "C" void errorIsr14();
-extern "C" void isr15();
-extern "C" void isr16();
-extern "C" void isr17();
-extern "C" void isr18();
-extern "C" void isr19();
-extern "C" void isr20();
-extern "C" void isr21();
-extern "C" void isr22();
-extern "C" void isr23();
-extern "C" void isr24();
-extern "C" void isr25();
-extern "C" void isr26();
-extern "C" void isr27();
-extern "C" void isr28();
-extern "C" void isr29();
-extern "C" void isr30();
-extern "C" void isr31();
-extern "C" void isr32();
-extern "C" void isr33();
-extern "C" void isr34();
-extern "C" void isr35();
-extern "C" void isr36();
-extern "C" void isr37();
-extern "C" void isr38();
-extern "C" void isr39();
-extern "C" void isr40();
-extern "C" void isr41();
-extern "C" void isr42();
-extern "C" void isr43();
-extern "C" void isr44();
-extern "C" void isr45();
-extern "C" void isr46();
-extern "C" void isr47();
-extern "C" void isr48();
-extern "C" void isr49();
-extern "C" void isr50();
-extern "C" void isr51();
-extern "C" void isr52();
-extern "C" void isr53();
-extern "C" void isr54();
-extern "C" void isr55();
-extern "C" void isr56();
-extern "C" void isr57();
-extern "C" void isr58();
-extern "C" void isr59();
-extern "C" void isr60();
-extern "C" void isr61();
-extern "C" void isr62();
-extern "C" void isr63();
-extern "C" void isr64();
-extern "C" void isr65();
-extern "C" void isr66();
-extern "C" void isr67();
-extern "C" void isr68();
-extern "C" void isr69();
-extern "C" void isr70();
-extern "C" void isr71();
-extern "C" void isr72();
-extern "C" void isr73();
-extern "C" void isr74();
-extern "C" void isr75();
-extern "C" void isr76();
-extern "C" void isr77();
-extern "C" void isr78();
-extern "C" void isr79();
-extern "C" void isr80();
-extern "C" void isr81();
-extern "C" void isr82();
-extern "C" void isr83();
-extern "C" void isr84();
-extern "C" void isr85();
-extern "C" void isr86();
-extern "C" void isr87();
-extern "C" void isr88();
-extern "C" void isr89();
-extern "C" void isr90();
-extern "C" void isr91();
-extern "C" void isr92();
-extern "C" void isr93();
-extern "C" void isr94();
-extern "C" void isr95();
-extern "C" void isr96();
-extern "C" void isr97();
-extern "C" void isr98();
-extern "C" void isr99();
-extern "C" void isr100();
-extern "C" void isr101();
-extern "C" void isr102();
-extern "C" void isr103();
-extern "C" void isr104();
-extern "C" void isr105();
-extern "C" void isr106();
-extern "C" void isr107();
-extern "C" void isr108();
-extern "C" void isr109();
-extern "C" void isr110();
-extern "C" void isr111();
-extern "C" void isr112();
-extern "C" void isr113();
-extern "C" void isr114();
-extern "C" void isr115();
-extern "C" void isr116();
-extern "C" void isr117();
-extern "C" void isr118();
-extern "C" void isr119();
-extern "C" void isr120();
-extern "C" void isr121();
-extern "C" void isr122();
-extern "C" void isr123();
-extern "C" void isr124();
-extern "C" void isr125();
-extern "C" void isr126();
-extern "C" void isr127();
-extern "C" void isr128();
-extern "C" void isr129();
-extern "C" void isr130();
-extern "C" void isr131();
-extern "C" void isr132();
-extern "C" void isr133();
-extern "C" void isr134();
-extern "C" void isr135();
-extern "C" void isr136();
-extern "C" void isr137();
-extern "C" void isr138();
-extern "C" void isr139();
-extern "C" void isr140();
-extern "C" void isr141();
-extern "C" void isr142();
-extern "C" void isr143();
-extern "C" void isr144();
-extern "C" void isr145();
-extern "C" void isr146();
-extern "C" void isr147();
-extern "C" void isr148();
-extern "C" void isr149();
-extern "C" void isr150();
-extern "C" void isr151();
-extern "C" void isr152();
-extern "C" void isr153();
-extern "C" void isr154();
-extern "C" void isr155();
-extern "C" void isr156();
-extern "C" void isr157();
-extern "C" void isr158();
-extern "C" void isr159();
-extern "C" void isr160();
-extern "C" void isr161();
-extern "C" void isr162();
-extern "C" void isr163();
-extern "C" void isr164();
-extern "C" void isr165();
-extern "C" void isr166();
-extern "C" void isr167();
-extern "C" void isr168();
-extern "C" void isr169();
-extern "C" void isr170();
-extern "C" void isr171();
-extern "C" void isr172();
-extern "C" void isr173();
-extern "C" void isr174();
-extern "C" void isr175();
-extern "C" void isr176();
-extern "C" void isr177();
-extern "C" void isr178();
-extern "C" void isr179();
-extern "C" void isr180();
-extern "C" void isr181();
-extern "C" void isr182();
-extern "C" void isr183();
-extern "C" void isr184();
-extern "C" void isr185();
-extern "C" void isr186();
-extern "C" void isr187();
-extern "C" void isr188();
-extern "C" void isr189();
-extern "C" void isr190();
-extern "C" void isr191();
-extern "C" void isr192();
-extern "C" void isr193();
-extern "C" void isr194();
-extern "C" void isr195();
-extern "C" void isr196();
-extern "C" void isr197();
-extern "C" void isr198();
-extern "C" void isr199();
-extern "C" void isr200();
-extern "C" void isr201();
-extern "C" void isr202();
-extern "C" void isr203();
-extern "C" void isr204();
-extern "C" void isr205();
-extern "C" void isr206();
-extern "C" void isr207();
-extern "C" void isr208();
-extern "C" void isr209();
-extern "C" void isr210();
-extern "C" void isr211();
-extern "C" void isr212();
-extern "C" void isr213();
-extern "C" void isr214();
-extern "C" void isr215();
-extern "C" void isr216();
-extern "C" void isr217();
-extern "C" void isr218();
-extern "C" void isr219();
-extern "C" void isr220();
-extern "C" void isr221();
-extern "C" void isr222();
-extern "C" void isr223();
-extern "C" void isr224();
-extern "C" void isr225();
-extern "C" void isr226();
-extern "C" void isr227();
-extern "C" void isr228();
-extern "C" void isr229();
-extern "C" void isr230();
-extern "C" void isr231();
-extern "C" void isr232();
-extern "C" void isr233();
-extern "C" void isr234();
-extern "C" void isr235();
-extern "C" void isr236();
-extern "C" void isr237();
-extern "C" void isr238();
-extern "C" void isr239();
-extern "C" void isr240();
-extern "C" void isr241();
-extern "C" void isr242();
-extern "C" void isr243();
-extern "C" void isr244();
-extern "C" void isr245();
-extern "C" void isr246();
-extern "C" void isr247();
-extern "C" void isr248();
-extern "C" void isr249();
-extern "C" void isr250();
-extern "C" void isr251();
-extern "C" void isr252();
-extern "C" void isr253();
-extern "C" void isr254();
-extern "C" void isr255();
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+void isr0();
+void isr1();
+void isr2();
+void isr3();
+void isr4();
+void isr5();
+void isr6();
+void isr7();
+void errorIsr8();
+void isr9();
+void errorIsr10();
+void errorIsr11();
+void errorIsr12();
+void errorIsr13();
+void errorIsr14();
+void isr15();
+void isr16();
+void isr17();
+void isr18();
+void isr19();
+void isr20();
+void isr21();
+void isr22();
+void isr23();
+void isr24();
+void isr25();
+void isr26();
+void isr27();
+void isr28();
+void isr29();
+void isr30();
+void isr31();
+void isr32();
+void isr33();
+void isr34();
+void isr35();
+void isr36();
+void isr37();
+void isr38();
+void isr39();
+void isr40();
+void isr41();
+void isr42();
+void isr43();
+void isr44();
+void isr45();
+void isr46();
+void isr47();
+void isr48();
+void isr49();
+void isr50();
+void isr51();
+void isr52();
+void isr53();
+void isr54();
+void isr55();
+void isr56();
+void isr57();
+void isr58();
+void isr59();
+void isr60();
+void isr61();
+void isr62();
+void isr63();
+void isr64();
+void isr65();
+void isr66();
+void isr67();
+void isr68();
+void isr69();
+void isr70();
+void isr71();
+void isr72();
+void isr73();
+void isr74();
+void isr75();
+void isr76();
+void isr77();
+void isr78();
+void isr79();
+void isr80();
+void isr81();
+void isr82();
+void isr83();
+void isr84();
+void isr85();
+void isr86();
+void isr87();
+void isr88();
+void isr89();
+void isr90();
+void isr91();
+void isr92();
+void isr93();
+void isr94();
+void isr95();
+void isr96();
+void isr97();
+void isr98();
+void isr99();
+void isr100();
+void isr101();
+void isr102();
+void isr103();
+void isr104();
+void isr105();
+void isr106();
+void isr107();
+void isr108();
+void isr109();
+void isr110();
+void isr111();
+void isr112();
+void isr113();
+void isr114();
+void isr115();
+void isr116();
+void isr117();
+void isr118();
+void isr119();
+void isr120();
+void isr121();
+void isr122();
+void isr123();
+void isr124();
+void isr125();
+void isr126();
+void isr127();
+void isr128();
+void isr129();
+void isr130();
+void isr131();
+void isr132();
+void isr133();
+void isr134();
+void isr135();
+void isr136();
+void isr137();
+void isr138();
+void isr139();
+void isr140();
+void isr141();
+void isr142();
+void isr143();
+void isr144();
+void isr145();
+void isr146();
+void isr147();
+void isr148();
+void isr149();
+void isr150();
+void isr151();
+void isr152();
+void isr153();
+void isr154();
+void isr155();
+void isr156();
+void isr157();
+void isr158();
+void isr159();
+void isr160();
+void isr161();
+void isr162();
+void isr163();
+void isr164();
+void isr165();
+void isr166();
+void isr167();
+void isr168();
+void isr169();
+void isr170();
+void isr171();
+void isr172();
+void isr173();
+void isr174();
+void isr175();
+void isr176();
+void isr177();
+void isr178();
+void isr179();
+void isr180();
+void isr181();
+void isr182();
+void isr183();
+void isr184();
+void isr185();
+void isr186();
+void isr187();
+void isr188();
+void isr189();
+void isr190();
+void isr191();
+void isr192();
+void isr193();
+void isr194();
+void isr195();
+void isr196();
+void isr197();
+void isr198();
+void isr199();
+void isr200();
+void isr201();
+void isr202();
+void isr203();
+void isr204();
+void isr205();
+void isr206();
+void isr207();
+void isr208();
+void isr209();
+void isr210();
+void isr211();
+void isr212();
+void isr213();
+void isr214();
+void isr215();
+void isr216();
+void isr217();
+void isr218();
+void isr219();
+void isr220();
+void isr221();
+void isr222();
+void isr223();
+void isr224();
+void isr225();
+void isr226();
+void isr227();
+void isr228();
+void isr229();
+void isr230();
+void isr231();
+void isr232();
+void isr233();
+void isr234();
+void isr235();
+void isr236();
+void isr237();
+void isr238();
+void isr239();
+void isr240();
+void isr241();
+void isr242();
+void isr243();
+void isr244();
+void isr245();
+void isr246();
+void isr247();
+void isr248();
+void isr249();
+void isr250();
+void isr251();
+void isr252();
+void isr253();
+void isr254();
+void isr255();
+#ifdef __cplusplus
+}
+#endif
+#ifdef __cplusplus
 typedef void (*eventHandlers_t)(registers_t*);
+#else
+typedef void (*eventHandlers_t)(struct registers_t*);
+#endif
 
-inline const char *exceptionMessages[] = {
-    "Divide by zero",
-    "Debug",
-    "NMI",
-    "Breakpoint",
-    "Overflow",
-    "Bound Range Exceeded",
-    "Invaild Opcode",
-    "Device Not Available",
-    "Double fault",
-    "Co-processor Segment Overrun",
-    "Invaild TSS",
-    "Segment not present",
-    "Stack-Segment Fault",
-    "GPF",
-    "Page Fault",
-    "Reserved",
-    "x87 Floating Point Exception",
-    "allignement check",
-    "Machine check",
-    "SIMD floating-point exception",
-    "Virtualization Excpetion",
-    "Deadlock",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Security Exception",
-    "Reserved",
-    "Triple Fault",
-    "FPU error"
-};
+
+
+
+
+
 
 void InitializeISR();
-extern "C" void ISRHandler(registers_t *r);
+#ifdef __cplusplus
+extern "C" {
+void ISRHandler(registers_t *r);
 void IRQ0HNDLER(registers_t *r);
+void install_isr_at(uint8_t isr, eventHandlers_t handler);
+}
+registers_t* IDT_get_last_registers();
+#else
+void ISRHandler(struct registers_t *r);
+void IRQ0HNDLER(struct registers_t *r);
+struct registers_t* IDT_get_last_registers();
+void install_isr_at(uint8_t isr, eventHandlers_t handler);
+#endif
+
 
 bool IDT_registers_to_capture();
-registers_t* IDT_get_last_registers();
-                                 //          0     1     2     3     4     5     6     7      8    9     10    11    12    13    14    15    16    17    18    19    20    21    22    23    24    25    26    27    28    29    30    31    32          33                    34    35    36    37    38    39    40    41    42    43    44             45    46    47    48    49    50    51    52    53    54    55    56    57    58    59    60    61    62    63    64    65    66    67    68    69    70    71    72    73    74    75    76    77    78    79    80    81    82    83    84    85    86    87    88    89    90    91    92    93    94    95    96    97    98    99    100   101   102   103   104   105   106   107   108   109   110   111   112   113   114   115   116   117   118   119   120   121   122   123   124   125   126  127  128    129   130   131   132   133   134   135   136   137   138   139   140   141   142   143   144   145   146   147   148   149   150   151   152   153   154   155   156   157   158   159   160   161   162   163   164   165   166   167   168   169   170   171   172   173   174   175   176   177   178   179   180   181   182   183   184   185   186   187   188   189   190   191   192   193   194   195   196   197   198   199   200   201   202   203   204   205   206   207   208   209   210   211   212   213   214   215   216   217   218   219   220   221   222   223   224   225   226   227   228   229   230   231   232   233   234   235   236   237   238   239   240   241   242   243   244   245   246   247   248   249   250   251   252   253   254   255
-inline eventHandlers_t eventHandlers[] =   { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, IRQ0HNDLER, KeyboardHandler, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
+

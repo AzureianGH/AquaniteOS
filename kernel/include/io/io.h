@@ -1,7 +1,10 @@
 #pragma once
 
 #include <stdint.h>
-
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 void outb(uint16_t port, uint8_t val);
 uint8_t inb(uint16_t port);
 void outw(uint16_t port, uint16_t val);
@@ -15,3 +18,6 @@ void insw(uint16_t port, void* addr, uint32_t count);
 void outsl(uint16_t port, const void* addr, uint32_t count);
 void insl(uint16_t port, void* addr, uint32_t count);
 void io_wait();
+#ifdef __cplusplus
+}
+#endif
