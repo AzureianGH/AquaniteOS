@@ -1,5 +1,6 @@
 #include <string/string.h>
-
+#include <memory/dlmalloc.h>
+#include <memory/gccmemory.h>
 int strcmp(const char* str1, const char* str2)
 {
     while (*str1 != '\0' && *str2 != '\0')
@@ -49,3 +50,22 @@ char *strtok(char *str, const char *delim)
     return start;
 }
 
+char* strdup(const char* str)
+{
+    size_t len = strlen(str) + 1;
+    char* copy = (char*)malloc(len);
+    if (copy) {
+        memcpy(copy, str, len);
+    }
+    return copy;
+}
+
+size_t strlen(const char* str)
+{
+    size_t len = 0;
+    while (str[len] != '\0')
+    {
+        len++;
+    }
+    return len;
+}

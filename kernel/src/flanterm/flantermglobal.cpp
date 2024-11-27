@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <idt/idt.h>
 #include <sched/sched.h>
+#include <string/string.h>
 
 flanterm_context* instance = nullptr;
 spinlock_t printlock;
@@ -12,15 +13,6 @@ void flanterm_set_instance(flanterm_context *inst)
     instance = inst;
     spinlock_init(&printlock);
     spinlock_init(&vprintlock);
-}
-int strlen(const char *str)
-{
-    int len = 0;
-    while (str[len] != '\0')
-    {
-        len++;
-    }
-    return len;
 }
 
 // itoa

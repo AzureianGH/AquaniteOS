@@ -22,6 +22,7 @@
 #include <ps2/keyboard.h>
 #include <uacpi/uacpi.h>
 #include <uacpi/event.h>
+#include <amfs/amfs_dec.h>
 /// ------------------------------ ///
 
 /// ---------- DEFINES ---------- ///
@@ -97,7 +98,16 @@ limine_rsdp_response *limine_rsdp_resp;
 limine_framebuffer *framebuffer;
 extern uint64_t kernel_start;
 extern uint64_t kernel_end;
-
+static uint8_t bwa_amfs[]  = {
+  0xf5, 0xac, 0x00, 0x00, 0x01, 0x00, 0x16, 0x00, 0x00, 0x00, 0x6e, 0x00, 0x00, 0x00, 0x02, 0x00, 
+  0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x74, 0x65, 0x73, 0x74, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 
+  0xff, 0xff, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x2e, 0x74, 0x78, 0x74, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x62, 0x77, 
+  0x61, 0x20, 0x62, 0x77, 0x61, 0x20, 0x3a, 0x33
+};
 /// ---------- GLOBAL FUNCS ---------- ///
 void main_process();
 void handle_shell_input(key_t key);
@@ -142,15 +152,14 @@ extern void kernel_main() {
     KeyboardInit();
     AddKeyboardInterrupt(handle_shell_input);
     InitializeISR();
-    //set handle_test_isr as 0x80
-    
     InitializeIDT();
     initialize_phys_memory();
     initialize_virtual_memory();
     initialize_heap();
     PITInit();
     set_uacpi_rsdp(limine_rsdp_resp->address);
-    uacpi_status ret = uacpi_initialize(0);
+    //uacpi_status ret = uacpi_initialize(0);
+    
     lprintf(logging_level::OK, "Kernel initialized.\n");
     lprintf(logging_level::INFO, "Waiting for scheduler handoff...\n");
     EnableInterrupts();
@@ -163,7 +172,7 @@ uint16_t input_buffer_index = 0;
 bool ready_for_input = false;
 bool looped = false;
 bool shift_pressed = false; // Track if Shift key is pressed
-
+amfs_handle_t amfs;
 void clear_input_buffer() {
     memset(input_buffer, 0, sizeof(input_buffer));
     input_buffer_index = 0;
@@ -172,13 +181,6 @@ void clear_input_buffer() {
 
 char *args[MAX_ARGS];
 registers_t *r_l_int;
-volatile uint64_t adding1 = 0;
-void adding()
-{
-    
-    while(1) {adding1 += 1;};
-}
-process_t* StartedProc;
 void handle_command() {
     // Null-terminate the input buffer for safe string operations
     input_buffer[input_buffer_index] = '\0';
@@ -193,14 +195,75 @@ void handle_command() {
 
     // Check the command and respond
     if (argc > 0) {
-        if (strcmp(args[0], "echo") == 0) {
+        if (strcmp(args[0], "amfs") == 0) {
             if (argc > 1)
             {
-                if (strcmp(args[1], "$adding") == 0)
+                if (strcmp(args[1], "init") == 0)
                 {
-                    printf("Adding: %l\n", adding1);
+                    amfs = amfs_init(bwa_amfs);
+                    if (amfs == NULL)
+                    {
+                        printf("Failed to initialize AMFS.\n");
+                    }
+                    else
+                    {
+                        printf("AMFS initialized.\n");
+                    }
+                }
+                else if (strcmp(args[1], "read") == 0)
+                {
+                    if (argc > 2)
+                    {
+                        uint32_t size;
+                        uint8_t *data = amfs_read_file(amfs, args[2], &size);
+                        if (data == NULL)
+                        {
+                            printf("Failed to read file.\n");
+                        }
+                        else
+                        {
+                            printf("%s\n", data);
+                        }
+                    }
+                    else
+                    {
+                        printf("Usage: amfs read [file]\n");
+                    }
+                }
+                else if (strcmp(args[1], "size") == 0)
+                {
+                    if (argc > 2)
+                    {
+                        int64_t size = amfs_get_file_size(amfs, args[2]);
+                        if (size == -1)
+                        {
+                            printf("File not found.\n");
+                        }
+                        else
+                        {
+                            printf("File size: %d bytes\n", size);
+                        }
+                    }
+                    else
+                    {
+                        printf("Usage: amfs size [file]\n");
+                    }
+                }
+                else if (strcmp(args[1], "list") == 0)
+                {
+                    amfs_list_directory(amfs, "/");
+                }
+                else
+                {
+                    printf("Unknown subcommand: %s\n", args[1]);
                 }
             }
+            else
+            {
+                printf("Usage: amfs [init|read|size]\n");
+            }
+        }
+        else if (strcmp(args[0], "echo") == 0) {
             for (int i = 1; i < argc; i++) {
                 printf("%s ", args[i]);
             }
@@ -214,6 +277,7 @@ void handle_command() {
             printf("echo [text] - Print text to the terminal\n");
             printf("clear - Clear the terminal\n");
             printf("help - Display this help message\n");
+            printf("capture [next|start|stop|print] - Capture and print the last interrupt\n");
         }
         else if (strcmp(args[0], "capture") == 0) {
         if (argc > 1) {

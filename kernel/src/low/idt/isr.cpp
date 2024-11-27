@@ -689,6 +689,7 @@ extern "C" void ISRHandler(registers_t *r) {
         //ss cs
         lprintf(logging_level::ERROR, "SS: %l\n", r->ss);
         lprintf(logging_level::ERROR, "CS: %l\n", r->cs);
+        
 
         for (;;) {
             asm volatile("cli");
