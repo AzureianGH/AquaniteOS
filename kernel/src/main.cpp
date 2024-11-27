@@ -20,6 +20,8 @@
 #include <memory/paging/physical.h>
 #include <memory/paging/common_memory.h>
 #include <ps2/keyboard.h>
+#include <uacpi/uacpi.h>
+#include <uacpi/event.h>
 /// ------------------------------ ///
 
 /// ---------- DEFINES ---------- ///
@@ -147,6 +149,8 @@ extern void kernel_main() {
     initialize_virtual_memory();
     initialize_heap();
     PITInit();
+    set_uacpi_rsdp(limine_rsdp_resp->address);
+    uacpi_status ret = uacpi_initialize(0);
     lprintf(logging_level::OK, "Kernel initialized.\n");
     lprintf(logging_level::INFO, "Waiting for scheduler handoff...\n");
     EnableInterrupts();

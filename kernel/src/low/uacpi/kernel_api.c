@@ -106,6 +106,8 @@ uacpi_status uacpi_kernel_raw_io_write(
 
 void *uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len)
 {
+    addr &= ~(0xFFF);
+    len = (len + 0xFFF) & ~(0xFFF);
     unsigned long long vmmmemo = allocate_virtual_memory_kernel(len);
     virtual_map(addr, vmmmemo, true, false, true, false, false, false, 0, true);
     return (void *)vmmmemo;
