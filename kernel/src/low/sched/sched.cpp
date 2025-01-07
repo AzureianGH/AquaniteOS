@@ -14,14 +14,22 @@ void sched_init()
     sched_pid_current = 0;
     lprintf(logging_level::OK, "Scheduler initialized.\n");
 }
-
+extern void main_process();
+void backup()
+{
+    while (true)
+    {
+        lprintf(logging_level::OK, "No processes available to schedule.\n");
+    }
+}
 process_t* get_next_process()
 {
     size_t process_count = get_process_count();
     if (process_count == 0)
     {
         lprintf(logging_level::ERROR, "No processes available to schedule.\n");
-        return nullptr;
+        lprintf(logging_level::INFO, "Starting Shell...\n");
+        return process_create(backup);
     }
 
     // Safely get the next process in a circular fashion

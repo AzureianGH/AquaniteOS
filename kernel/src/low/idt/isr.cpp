@@ -638,8 +638,14 @@ registers_t* IDT_get_last_registers()
     captured_last_registers = false;
     return &last_registers;
 }
+bool IDT_Safe_To_Continue = false;
+extern "C" void ISRIgnoreFaults() { IDT_Safe_To_Continue = true; }
+extern "C" void ISRCatchFaults() { IDT_Safe_To_Continue = false; }
 extern "C" void ISRHandler(registers_t *r) {
     if (r->isrNumber < 32) {
+        if (IDT_Safe_To_Continue) {
+            return;
+        }
         uint64_t cr2;
         asm volatile(
             "cli\n" // Disable interrupts
@@ -691,10 +697,10 @@ extern "C" void ISRHandler(registers_t *r) {
         lprintf(logging_level::ERROR, "CS: %l\n", r->cs);
         
 
-        for (;;) {
-            asm volatile("cli");
-            asm volatile("hlt");
-        }
+        //terminate proc
+        uint64_t current_pid = get_current_pid();
+        terminate_process(get_current_process());
+        lprintf(logging_level::ERROR, "Process with PID of \"%d\" Terminated.\n", current_pid);
     }
 
     // After every interrupt, send an EOI to the PICs or they will not send another interrupt again

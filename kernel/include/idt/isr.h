@@ -283,6 +283,8 @@ extern "C" {
 void ISRHandler(registers_t *r);
 void IRQ0HNDLER(registers_t *r);
 void install_isr_at(uint8_t isr, eventHandlers_t handler);
+void ISRIgnoreFaults();
+void ISRCatchFaults();
 }
 registers_t* IDT_get_last_registers();
 #else

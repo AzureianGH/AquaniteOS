@@ -56,3 +56,13 @@ void terminate_process(process_t* proc)
     processes_in_system.EraseValue(proc);
     free(proc);
 }
+
+uint64_t get_current_pid()
+{
+    return current_pid;
+}
+
+process_t* get_current_process()
+{
+    return processes_in_system[process_count - 1];
+}

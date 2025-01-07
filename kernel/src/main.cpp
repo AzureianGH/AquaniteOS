@@ -159,6 +159,10 @@ extern void kernel_main() {
     PITInit();
     set_uacpi_rsdp(limine_rsdp_resp->address);
     //uacpi_status ret = uacpi_initialize(0);
+    ISRIgnoreFaults();
+    //int 0x0
+    asm volatile("int $0x0");
+    ISRCatchFaults();
     
     lprintf(logging_level::OK, "Kernel initialized.\n");
     lprintf(logging_level::INFO, "Waiting for scheduler handoff...\n");
@@ -178,6 +182,14 @@ void clear_input_buffer() {
     input_buffer_index = 0;
 }
 #define MAX_ARGS 10 // Max number of arguments
+
+void test_proc_fail()
+{
+    int a = 3;
+    int b = 5;
+    int c = a / (b - 5); // This will cause a divide by zero error
+    printf("c: %d\n", c); // This will never be reached
+}
 
 char *args[MAX_ARGS];
 registers_t *r_l_int;
@@ -269,6 +281,15 @@ void handle_command() {
             }
             printf("\n");
         } 
+
+        else if (strcmp(args[0], "exit") == 0) {
+            printf("Exiting...\n");
+            terminate_process(get_current_process());
+            halt();
+        }
+        else if (strcmp(args[0], "test") == 0) {
+            process_create(test_proc_fail);
+        }
         else if (strcmp(args[0], "clear") == 0) {
             printf("\033[2J\033[H"); // Clear the terminal
         } 
@@ -298,7 +319,6 @@ void handle_command() {
                     if (strcmp(args[2], "int") == 0) {
                         if (r_l_int != nullptr) {
                             //full dump
-                            asm volatile("int $0x0");
                             printf("\033[0mInterrupt number: 0x%l\n", r_l_int->isrNumber);
                             printf("\033[0mRIP: 0x%i    RSP:  0x%i\n", r_l_int->rip, r_l_int->rsp);
                             printf("\033[0mRAX: 0x%i    RBX:  0x%i\n", r_l_int->rax, r_l_int->rbx);
@@ -412,7 +432,7 @@ void handle_shell_input(key_t key) {
 }
 
 bool mainprocstartfirst = false;
-void main_process() {
+extern void main_process() {
     if (!mainprocstartfirst)
     {
         lprintf(logging_level::OK, "Scheduler control given; main process started.\n");
