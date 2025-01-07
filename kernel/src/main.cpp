@@ -192,6 +192,7 @@ void test_proc_fail()
 }
 
 char *args[MAX_ARGS];
+void main_shell_ready();
 registers_t *r_l_int;
 void handle_command() {
     // Null-terminate the input buffer for safe string operations
@@ -283,10 +284,12 @@ void handle_command() {
         } 
 
         else if (strcmp(args[0], "exit") == 0) {
-            printf("Exiting...\n");
-            terminate_process(get_current_process());
-            halt();
+            printf("Exiting shell...\n");
+            main_shell_ready(); // Reset the shell state
+            terminate_process(get_current_process()); // Terminate the current process
+            halt(); // Halt the system (if applicable)
         }
+
         else if (strcmp(args[0], "test") == 0) {
             process_create(test_proc_fail);
         }
