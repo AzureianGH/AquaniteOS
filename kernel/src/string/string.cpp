@@ -69,3 +69,57 @@ size_t strlen(const char* str)
     }
     return len;
 }
+
+int strncmp(const char* str1, const char* str2, size_t n)
+{
+    for (size_t i = 0; i < n; i++)
+    {
+        if (str1[i] != str2[i])
+        {
+            return str1[i] - str2[i];
+        }
+    }
+    return 0;
+}
+
+char* strncpy(char* dest, const char* src, size_t n)
+{
+    size_t i = 0;
+    while (i < n && src[i] != '\0')
+    {
+        dest[i] = src[i];
+        i++;
+    }
+    while (i < n)
+    {
+        dest[i] = '\0';
+        i++;
+    }
+    return dest;
+}
+
+char* stpcpy(char* dest, const char* src)
+{
+    while (*src != '\0')
+    {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0';
+    return dest;
+}
+
+char* strstr(const char* haystack, const char* needle)
+{
+    size_t needle_len = strlen(needle);
+    while (*haystack != '\0')
+    {
+        if (strncmp(haystack, needle, needle_len) == 0)
+        {
+            return (char*)haystack;
+        }
+        haystack++;
+    }
+    return NULL;
+}

@@ -24,6 +24,7 @@ extern "C"
 #endif
     void clprintf(unsigned char lvl, const char *fmt, ...);
     void printf(const char *fmt, ...);
+    int16_t asprintf(char **str, const char *fmt, ...);
 #ifdef __cplusplus
 }
 #endif

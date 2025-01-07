@@ -14,7 +14,7 @@ typedef struct
 {
     uint64_t pid;
     process_state_t state;
-    registers_t context;
+    struct registers_t context;
     uint64_t* base;
     uint64_t* stack_rsp;
     uint64_t ticks;

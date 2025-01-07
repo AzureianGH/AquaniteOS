@@ -22,9 +22,7 @@ process_t* get_next_process()
     if (process_count == 0)
     {
         lprintf(logging_level::ERROR, "No processes available to schedule.\n");
-        lprintf(logging_level::INFO, "Starting Shell...\n");
-        main_shell_ready();
-        return process_create(main_process);
+        return nullptr;
     }
 
     // Safely get the next process in a circular fashion

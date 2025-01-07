@@ -359,3 +359,22 @@ void vprintf(const char *fmt, va_list args)
 
     flanterm_write(instance, buffer, strlen(buffer));
 }
+
+int16_t asprintf(char **str, const char *fmt, ...)
+{
+    if (instance == nullptr)
+    {
+        return -1;
+    }
+
+    va_list args;
+    va_start(args, fmt);
+
+    char buffer[1024];
+    vsnprintf(buffer, 1024, fmt, args);
+
+    *str = strdup(buffer);
+
+    va_end(args);
+    return strlen(*str);
+}

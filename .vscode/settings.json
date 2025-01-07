@@ -70,6 +70,12 @@
         "semaphore": "cpp",
         "stop_token": "cpp",
         "thread": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "stdlib.h": "c",
+        "sched.h": "c",
+        "proc.h": "c",
+        "regs.h": "c",
+        "atomic.h": "c",
+        "optional": "cpp"
     }
 }

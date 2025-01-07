@@ -471,6 +471,12 @@ extern void main_shell_ready()
     for (int i = 0; i < MAX_ARGS; i++) {
         args[i] = nullptr;
     }
+
+    //reset the last interrupt registers
+    r_l_int = nullptr;
+
+    //reset the AMFS handle
+    amfs = nullptr;
 }
 
 /// --------------------------------- ///
