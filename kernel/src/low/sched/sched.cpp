@@ -15,13 +15,7 @@ void sched_init()
     lprintf(logging_level::OK, "Scheduler initialized.\n");
 }
 extern void main_process();
-void backup()
-{
-    while (true)
-    {
-        lprintf(logging_level::OK, "No processes available to schedule.\n");
-    }
-}
+extern void main_shell_ready();
 process_t* get_next_process()
 {
     size_t process_count = get_process_count();
@@ -29,20 +23,26 @@ process_t* get_next_process()
     {
         lprintf(logging_level::ERROR, "No processes available to schedule.\n");
         lprintf(logging_level::INFO, "Starting Shell...\n");
-        return process_create(backup);
+        main_shell_ready();
+        return process_create(main_process);
     }
 
     // Safely get the next process in a circular fashion
-    sched_pid_next = (sched_pid_next + 1) % process_count;
-    process_t* next_process = processes_in_system[sched_pid_next];
-
-    if (!next_process)
+    for (size_t i = 0; i < process_count; ++i)
     {
-        lprintf(logging_level::ERROR, "Process at PID %d is nullptr.\n", sched_pid_next);
-        return nullptr;
+        sched_pid_next = (sched_pid_next + 1) % process_count;
+        process_t* next_process = processes_in_system[sched_pid_next];
+
+        if (next_process != nullptr)
+        {
+            return next_process;
+        }
     }
-    return next_process;
+
+    lprintf(logging_level::ERROR, "No valid processes found.\n");
+    return nullptr;
 }
+
 bool is_swap_allowed = true;
 uint32_t sched_lock_num = 0;
 void lock_scheduler()

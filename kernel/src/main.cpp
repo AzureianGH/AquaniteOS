@@ -440,7 +440,7 @@ extern void main_process() {
         printf("Welcome to the Aquanite shell!\n");
         mainprocstartfirst = true;
     }
-
+    ready_for_input = true;
     while (true) {
         // Main loop does nothing; input is interrupt-driven
         if (ready_for_input && !looped) {
@@ -455,5 +455,19 @@ extern void main_process() {
     }
 }
 
+extern void main_shell_ready()
+{
+    //set all bools
+    looped = false;
+    mainprocstartfirst = false;
+    ready_for_input = false;
+    shift_pressed = false;
+    //clear the input buffer
+    clear_input_buffer();
+    //reset the arguments
+    for (int i = 0; i < MAX_ARGS; i++) {
+        args[i] = nullptr;
+    }
+}
 
 /// --------------------------------- ///
