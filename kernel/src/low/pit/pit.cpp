@@ -21,9 +21,8 @@ Vector<uint64_t> PITSleepingProcesses;
 void PITSleep(uint64_t ms)
 {
     spinlock_acquire(&pit_lock); // Acquire the spinlock
-    // Add the current process to the sleeping processes vector
-    PITSleepingProcesses.PushBack(ms);
-    // Implement the sleep logic here
+    uint64_t ticks = ms; // Assuming PIT frequency is 1000 Hz, 1 tick = 1 ms
+    PITSleepingProcesses.PushBack(ticks);
     spinlock_release(&pit_lock); // Release the spinlock
 }
 
