@@ -378,3 +378,31 @@ int16_t asprintf(char **str, const char *fmt, ...)
     va_end(args);
     return strlen(*str);
 }
+
+int16_t snprintf(char *str, size_t size, const char *fmt, ...)
+{
+    if (instance == nullptr)
+    {
+        return -1;
+    }
+
+    va_list args;
+    va_start(args, fmt);
+
+    vsnprintf(str, size, fmt, args);
+
+    va_end(args);
+    return strlen(str);
+}
+
+void clear_screen()
+{
+    printf("\033[2J\033[H");
+}
+
+void set_cursor(size_t x, size_t y)
+{
+    char buffer[32];
+    snprintf(buffer, 32, "\033[%d;%dH", y, x);
+    printf(buffer);
+}

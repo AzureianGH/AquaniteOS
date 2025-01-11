@@ -25,6 +25,10 @@ void initialize_virtual_memory(void)
     lprintf(logging_level::INFO,"Base address: 0x%l\n", base_address);
     lprintf(logging_level::OK,"Virtual memory initialized.\n");
 }
+bool virtual_map_page(void* page, uint64_t cr2) 
+{
+    return virtual_map(reinterpret_cast<uint64_t>(page), cr2, true, false, true, false, false, false, 0, true);
+}
 
 bool virtual_map(uint64_t physical_address, uint64_t virtual_address, bool is_read_write, bool disable_execution,
                  bool is_supervisor, bool pwt, bool pcd, bool pat, uint8_t pk, bool is_present)

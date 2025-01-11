@@ -696,10 +696,21 @@ extern "C" void ISRHandler(registers_t *r) {
         lprintf(logging_level::ERROR, "SS: %l\n", r->ss);
         lprintf(logging_level::ERROR, "CS: %l\n", r->cs);
         
-
+        if (get_current_process()->importance == KERNEL_INITIATED)
+        {
+            lprintf(logging_level::ERROR, "Kernel Initiated Process Faulted. Kernel is Halting.\n");
+            asm volatile("cli");
+            for (;;)
+            {
+                asm volatile("hlt");
+                
+            }
+        }
         //terminate proc
         uint64_t current_pid = get_current_pid();
         terminate_process(get_current_process());
+        //force swap
+        //scheduler(r);
         lprintf(logging_level::ERROR, "Process with PID of \"%d\" Terminated.\n", current_pid);
     }
 
@@ -719,4 +730,30 @@ extern "C" void ISRHandler(registers_t *r) {
     }
 }
 
+exception_handler ehandler;
+Vector<exception*> CachedExceptions;
+void ThrowException(exception* exception)
+{
+    CachedExceptions.PushBack(exception);
+    if (ehandler != nullptr)
+        ehandler(exception);
+    else if (ehandler == nullptr)
+    {
+        lprintf(logging_level::ERROR, "Unhandled Exception: %s\n", exception->name);
+        asm volatile("cli");
+        for (;;)
+        {
+            asm volatile("hlt");
+        }
+    }
+}
 
+void Try(trycode_ptr code)
+{
+    code();
+}
+
+void CatchException(exception_handler handler)
+{
+    ehandler = handler;
+}

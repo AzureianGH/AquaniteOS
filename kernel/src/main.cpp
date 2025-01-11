@@ -23,6 +23,7 @@
 #include <uacpi/uacpi.h>
 #include <uacpi/event.h>
 #include <amfs/amfs_dec.h>
+#include <syscall/syscall.h>
 /// ------------------------------ ///
 
 /// ---------- DEFINES ---------- ///
@@ -148,9 +149,10 @@ extern void kernel_main() {
     set_up_common_mem(limine_hhdm_resp, limine_memmap_us, limine_kernel_addy);
     process_init();
     sched_init();
-    process_create(main_process);
+    process_create(main_process, KERNEL_INITIATED, "shellproc", 2);
     KeyboardInit();
     AddKeyboardInterrupt(handle_shell_input);
+    syscall_install(0x80, nullptr);
     InitializeISR();
     InitializeIDT();
     initialize_phys_memory();
@@ -159,16 +161,20 @@ extern void kernel_main() {
     PITInit();
     set_uacpi_rsdp(limine_rsdp_resp->address);
     //uacpi_status ret = uacpi_initialize(0);
-    ISRIgnoreFaults();
-    //int 0x0
-    asm volatile("int $0x0");
-    ISRCatchFaults();
-    
     lprintf(logging_level::OK, "Kernel initialized.\n");
     lprintf(logging_level::INFO, "Waiting for scheduler handoff...\n");
     EnableInterrupts();
     while (true); // This point will be reached until the scheduler takes control. Then this will never be reached again.
     halt(); // This should never be reached. If it is, halt the system. (We say "if" since code is never perfect)
+}
+
+void test_proc()
+{
+    while (true)
+    {
+        printf("Test Process\n");
+        PITSleep(1000);
+    }
 }
 
 uint8_t input_buffer[1024];
@@ -182,15 +188,7 @@ void clear_input_buffer() {
     input_buffer_index = 0;
 }
 #define MAX_ARGS 10 // Max number of arguments
-
-void test_proc_fail()
-{
-    int a = 3;
-    int b = 5;
-    int c = a / (b - 5); // This will cause a divide by zero error
-    printf("c: %d\n", c); // This will never be reached
-}
-
+process_t* killable;
 char *args[MAX_ARGS];
 void main_shell_ready();
 registers_t *r_l_int;
@@ -287,11 +285,20 @@ void handle_command() {
             printf("Exiting shell...\n");
             main_shell_ready(); // Reset the shell state
             terminate_process(get_current_process()); // Terminate the current process
-            halt(); // Halt the system (if applicable)
+            halt();
         }
 
         else if (strcmp(args[0], "test") == 0) {
-            process_create(test_proc_fail);
+            //start process test_proc
+            process_create(test_proc, KERNEL_INITIATED, "test_proc", 2);
+        }
+        else if (strcmp(args[0], "kill") == 0) {
+            if (killable != nullptr) {
+                terminate_process(killable);
+                printf("Process terminated.\n");
+            } else {
+                printf("No process to kill.\n");
+            }
         }
         else if (strcmp(args[0], "clear") == 0) {
             printf("\033[2J\033[H"); // Clear the terminal

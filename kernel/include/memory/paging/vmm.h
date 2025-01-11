@@ -117,6 +117,7 @@ char virtual_unmap(uint64_t virtual_address);
 void print_page_info(uint64_t virtual_address);
 uint64_t allocate_virtual_memory_kernel(uint64_t size);
 void allocate_to(uint64_t virtual_base, uint64_t bytes);
+bool virtual_map_page(void* page, uint64_t cr2);
 #ifdef __cplusplus
 }
 #endif

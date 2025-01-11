@@ -76,6 +76,26 @@
         "proc.h": "c",
         "regs.h": "c",
         "atomic.h": "c",
-        "optional": "cpp"
+        "optional": "cpp",
+        "doomdef.h": "c",
+        "i_swap.h": "c",
+        "doomtype.h": "c",
+        "i_timer.h": "c",
+        "z_zone.h": "c",
+        "doomstat.h": "c",
+        "sounds.h": "c",
+        "flantermglobal.h": "c",
+        "w_checksum.h": "c",
+        "s_sound.h": "c",
+        "dstrings.h": "c",
+        "doomfeatures.h": "c",
+        "i_video.h": "c",
+        "i_system.h": "c",
+        "m_bbox.h": "c",
+        "d_loop.h": "c",
+        "dlmalloc.h": "c",
+        "string.h": "c",
+        "r_sky.h": "c",
+        "stdarg.h": "c"
     }
 }

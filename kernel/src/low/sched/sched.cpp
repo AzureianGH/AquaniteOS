@@ -7,25 +7,27 @@ void* __dso_handle = (void*)&__dso_handle;
 uint64_t sched_pid_next = 0, sched_pid_current = 0;
 extern Vector<process_t*> processes_in_system;
 process_t* next_proc = nullptr;
-
+spinlock_t sched_lock;
 void sched_init()
 {
     sched_pid_next = 0;
     sched_pid_current = 0;
+    spinlock_init(&sched_lock);
     lprintf(logging_level::OK, "Scheduler initialized.\n");
 }
 extern void main_process();
 extern void main_shell_ready();
+
 process_t* get_next_process()
 {
+    spinlock_acquire(&sched_lock);
     size_t process_count = get_process_count();
     if (process_count == 0)
     {
         lprintf(logging_level::ERROR, "No processes available to schedule.\n");
+        spinlock_release(&sched_lock);
         return nullptr;
     }
-
-    // Safely get the next process in a circular fashion
     for (size_t i = 0; i < process_count; ++i)
     {
         sched_pid_next = (sched_pid_next + 1) % process_count;
@@ -33,11 +35,13 @@ process_t* get_next_process()
 
         if (next_process != nullptr)
         {
+            spinlock_release(&sched_lock);
             return next_process;
         }
     }
 
     lprintf(logging_level::ERROR, "No valid processes found.\n");
+    spinlock_release(&sched_lock);
     return nullptr;
 }
 
@@ -56,6 +60,13 @@ void unlock_scheduler()
         is_swap_allowed = true;
     }
 }
+
+void swap_proc()
+{
+}
+
+
+
 void scheduler(registers_t* r)
 {
     if(!is_swap_allowed){return;}
@@ -66,7 +77,11 @@ void scheduler(registers_t* r)
         lprintf(logging_level::ERROR, "No process to schedule.\n");
         return;
     }
-    
+    if (next_process->state == PROCESS_TERMINATED)
+    {
+        terminate_process(next_process);
+        return;
+    }
     //check if the next process is the same as the current process
     if (next_process == next_proc)
     {

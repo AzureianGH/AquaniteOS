@@ -266,7 +266,18 @@ void isr255();
 }
 #endif
 #ifdef __cplusplus
+class exception
+{
+public:
+    char* name = "exception";
+    exception* inner = nullptr;
+};
 typedef void (*eventHandlers_t)(registers_t*);
+typedef void (*exception_handler)(exception*);
+typedef void (*trycode_ptr)();
+void ThrowException(exception* e);
+void CatchException(exception_handler handler);
+void Try(trycode_ptr code);
 #else
 typedef void (*eventHandlers_t)(struct registers_t*);
 #endif

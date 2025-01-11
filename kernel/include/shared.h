@@ -6,6 +6,7 @@
 #endif
 
 #ifdef __cplusplus
+#include <stdarg.h>
 template <typename T> class Vector
 {
 public:
@@ -131,4 +132,13 @@ private:
     size_t capacity;
     T* data;
 };
+
+/// @brief Create flags from ints
+/// @param first The first flag
+/// @param Any The following flags
+/// @return The flag int
+int create_flags(int first, ...);
+
+bool has_flag(int flags, int flag);
+
 #endif
